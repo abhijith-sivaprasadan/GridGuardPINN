@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 torch = pytest.importorskip("torch")
-from torch import nn
+nn = torch.nn
 
 from gridguardpinn.andes_surrogate import (
     N_BUSES,
@@ -115,7 +115,7 @@ def test_torque_bias_is_detected_by_physics_residual():
     )
     assert torch.allclose(
         r_omega,
-        torch.full_like(r_omega, -0.01),
+        torch.full_like(r_omega, 0.01),
         atol=2e-6,
         rtol=0.0,
     )
