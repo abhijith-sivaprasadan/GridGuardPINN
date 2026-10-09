@@ -74,3 +74,25 @@ def test_reference_failure_propagates():
 def test_invalid_time_grid_is_rejected():
     with pytest.raises(ValueError, match="time grid"):
         run_routed_case(**options(time_grid_s=np.array([0.0, 0.0, 1.0])))
+
+
+def test_residual_failure_executes_reference_with_specific_reason(monkeypatch):
+    import gridguardpinn.andes_runtime as runtime
+
+    def failed_residual(*args, **kwargs):
+        raise ValueError("Physics derivative unavailable")
+
+    monkeypatch.setattr(runtime, "compute_model_residual", failed_residual)
+    result = runtime.run_model_case(
+        model=object(),
+        fault_bus=3,
+        fault_duration_s=0.08,
+        residual_threshold=0.2,
+        inertia_M=np.ones(5),
+        damping_D=np.ones(5),
+        frequency_hz=np.full(5, 50.0),
+        reference=fake_reference,
+    )
+    assert result.source == "reference"
+    assert result.decision.reason == "residual_computation_failed"
+    assert result.electromechanical.shape == (401, 20)
