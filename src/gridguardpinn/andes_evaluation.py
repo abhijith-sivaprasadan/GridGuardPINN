@@ -81,11 +81,13 @@ def evaluate_case(
     *,
     residual_samples: int = 151,
     inference_repeats: int = 5,
+    fault_descriptor: np.ndarray | None = None,
 ):
     x_np = raw_input(
         trajectory.time_s,
         case.fault_duration_s,
         case.fault_bus,
+        fault_descriptor=fault_descriptor,
     )
     x = torch.tensor(x_np, dtype=torch.float32)
     prediction, inference_seconds = timed_prediction(
@@ -107,6 +109,7 @@ def evaluate_case(
             residual_times,
             case.fault_duration_s,
             case.fault_bus,
+            fault_descriptor=fault_descriptor,
         ),
         dtype=torch.float32,
         requires_grad=True,
@@ -168,10 +171,23 @@ def evaluate_split(
     cases,
     *,
     split: str,
+    fault_descriptors: dict[int, np.ndarray] | None = None,
 ):
     rows = []
     for case_id, case in enumerate(cases):
+        descriptor = (
+            None
+            if fault_descriptors is None
+            else fault_descriptors[case.fault_bus]
+        )
         row = {"split": split, "case_id": case_id}
-        row.update(evaluate_case(model, reference_map[case], case))
+        row.update(
+            evaluate_case(
+                model,
+                reference_map[case],
+                case,
+                fault_descriptor=descriptor,
+            )
+        )
         rows.append(row)
     return rows
