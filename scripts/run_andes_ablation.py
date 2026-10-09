@@ -46,7 +46,10 @@ def _aggregate(values) -> dict[str, float | None]:
 
 def _flat_row(arm, seed, split_name, summary):
     accuracy = summary["accuracy"][split_name]
-    gate = summary["reports"][split_name]["combined_strict"]
+    reports = summary["reports"][split_name]
+    residual = reports["residual_only"]
+    location_hard = reports["combined_location_hard"]
+    strict = reports["combined_strict"]
     return {
         "arm": arm,
         "seed": seed,
@@ -55,9 +58,15 @@ def _flat_row(arm, seed, split_name, summary):
         "composite_median": accuracy["composite_median"],
         "composite_mean": accuracy["composite_mean"],
         "residual_error_spearman": accuracy["residual_error_spearman"],
-        "combined_coverage": gate["coverage"],
-        "combined_false_accepts": gate["false_accepts"],
-        "combined_false_escalations": gate["false_escalations"],
+        "residual_coverage": residual["coverage"],
+        "residual_false_accepts": residual["false_accepts"],
+        "residual_false_escalations": residual["false_escalations"],
+        "location_hard_coverage": location_hard["coverage"],
+        "location_hard_false_accepts": location_hard["false_accepts"],
+        "location_hard_false_escalations": location_hard["false_escalations"],
+        "strict_coverage": strict["coverage"],
+        "strict_false_accepts": strict["false_accepts"],
+        "strict_false_escalations": strict["false_escalations"],
         "median_inference_seconds": accuracy["surrogate_inference"]["median_seconds"],
         "median_reference_seconds": accuracy["reference_simulation"]["median_seconds"],
         "median_speedup_vs_reference": accuracy["median_speedup_vs_reference"],
@@ -80,9 +89,15 @@ def _aggregate_summaries(flat_rows):
                     "composite_median",
                     "composite_mean",
                     "residual_error_spearman",
-                    "combined_coverage",
-                    "combined_false_accepts",
-                    "combined_false_escalations",
+                    "residual_coverage",
+                    "residual_false_accepts",
+                    "residual_false_escalations",
+                    "location_hard_coverage",
+                    "location_hard_false_accepts",
+                    "location_hard_false_escalations",
+                    "strict_coverage",
+                    "strict_false_accepts",
+                    "strict_false_escalations",
                     "median_inference_seconds",
                     "median_reference_seconds",
                     "median_speedup_vs_reference",
