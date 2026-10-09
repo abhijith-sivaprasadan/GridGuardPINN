@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from gridguardpinn.andes_runtime import load_checkpoint, run_model_case
+from gridguardpinn.andes_runtime import load_checkpoint, run_model_case, sha256_file
 
 
 def main() -> None:
@@ -18,12 +18,26 @@ def main() -> None:
     parser.add_argument("--protocol", required=True, help="Expected frozen training protocol")
     parser.add_argument("--bus", required=True, type=int)
     parser.add_argument("--duration", required=True, type=float)
-    parser.add_argument("--inertia", nargs=5, required=True, type=float)
-    parser.add_argument("--damping", nargs=5, required=True, type=float)
-    parser.add_argument("--frequency", nargs=5, required=True, type=float)
     parser.add_argument("--output-dir", default="artifacts/andes_runtime_cli")
     args = parser.parse_args()
 
+    from gridguardpinn.andes_reference import _import_andes
+
+    andes = _import_andes()
+    case_file = andes.get_case("ieee14/ieee14.json")
+    system = andes.load(case_file, setup=False)
+    # Never permit caller-supplied machine constants or a different machine order.
+    generator_buses = tuple(int(bus) for bus in system.GENROU.bus.v)
+    if len(generator_buses) != 5:
+        raise RuntimeError("Expected exactly five ordered GENROU machines")
+    constants = {
+        "inertia_M": np.asarray(system.GENROU.M.v, dtype=float),
+        "damping_D": np.asarray(system.GENROU.D.v, dtype=float),
+        "frequency_hz": np.asarray(system.GENROU.fn.v, dtype=float),
+    }
+    if any(array.shape != (5,) or not np.all(np.isfinite(array)) for array in constants.values()):
+        raise RuntimeError("Invalid machine constants from canonical ANDES case")
+    case_sha256 = sha256_file(case_file)
     model, threshold, summary = load_checkpoint(
         args.checkpoint,
         expected_sha256=args.sha256,
@@ -34,9 +48,7 @@ def main() -> None:
         fault_bus=args.bus,
         fault_duration_s=args.duration,
         residual_threshold=threshold,
-        inertia_M=np.asarray(args.inertia),
-        damping_D=np.asarray(args.damping),
-        frequency_hz=np.asarray(args.frequency),
+        **constants,
     )
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -57,6 +69,11 @@ def main() -> None:
         "fault_duration_s": args.duration,
         "model_protocol": summary["protocol"],
         "checkpoint_sha256": args.sha256,
+        "andes_version": str(andes.__version__),
+        "case_sha256": case_sha256,
+        "case_name": "ieee14/ieee14.json",
+        "ordered_generator_buses": generator_buses,
+        "residual_threshold": threshold,
         "reference_includes_bus_voltage": result.reference is not None,
         "warning": "Research-only screening; not an operational safety determination",
     }
