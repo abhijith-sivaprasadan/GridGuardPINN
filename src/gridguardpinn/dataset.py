@@ -42,7 +42,7 @@ def event_aware_time_grid(
     if samples < 15:
         raise ValueError("samples must be at least 15 for event-aware sampling.")
     early_end = min(early_window_s, scenario.t_end)
-    early_count = max(9, int(round(samples * 0.45)))
+    early_count = max(9, round(samples * 0.45))
     late_count = samples - early_count
 
     early = np.linspace(0.0, early_end, early_count, endpoint=False)
@@ -127,8 +127,8 @@ def build_collocation_points(
             rows.append(feature_row(np.asarray(accepted[:points_per_case]), scenario))
             continue
 
-        n_pre = max(4, int(round(points_per_case * 0.20)))
-        n_fault = max(6, int(round(points_per_case * 0.25)))
+        n_pre = max(4, round(points_per_case * 0.20))
+        n_fault = max(6, round(points_per_case * 0.25))
         n_post = points_per_case - n_pre - n_fault
         if n_post < 4:
             raise ValueError("points_per_case too small for phase-stratified sampling.")
