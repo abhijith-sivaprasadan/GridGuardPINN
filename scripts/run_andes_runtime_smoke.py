@@ -41,7 +41,7 @@ def main() -> None:
             "state_dict": model.state_dict(),
             "training": {"config": {"hidden_width": 96, "hidden_layers": 5}},
             "gate": {"residual_threshold": 0.0},
-            "summary": {"protocol": "runtime-smoke"},
+            "summary": {"protocol": "runtime-smoke", "experiment_metadata": {"location_encoding": "one_hot"}},
         },
         checkpoint_path,
     )
