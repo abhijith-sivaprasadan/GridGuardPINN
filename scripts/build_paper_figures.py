@@ -5,9 +5,9 @@ Do not use this script to claim a new data analysis or independent validation.
 """
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+plt.switch_backend("Agg")
 
 OUTPUT = Path("docs/figures")
 OUTPUT.mkdir(parents=True, exist_ok=True)
