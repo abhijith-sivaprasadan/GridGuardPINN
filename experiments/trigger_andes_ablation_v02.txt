@@ -13,3 +13,5 @@ This trigger exists only to launch the pre-registered workflow without making
 the ablation run on ordinary source-code pushes.
 
 Retriggered after workflow/test fixes at commit afcacb432fcafd80e2909e8c203f78b2895ef3d6.
+
+Final instrumentation retrigger at commit 8e2f310584c152e4678f2f5ac2c1bca4f1904e04.
