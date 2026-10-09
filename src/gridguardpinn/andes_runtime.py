@@ -166,3 +166,112 @@ def model_prediction(model):
             return model(x).detach().cpu().numpy()
 
     return predict
+
+
+def compute_model_residual(
+    model,
+    *,
+    fault_bus: int,
+    fault_duration_s: float,
+    inertia_M: np.ndarray,
+    damping_D: np.ndarray,
+    frequency_hz: np.ndarray,
+    samples: int = 151,
+) -> float:
+    """Match the frozen evaluation's residual score without using target errors.
+
+    Machine constants must be supplied from independently trusted IEEE-14
+    configuration; they cannot be inferred from a learned prediction.
+    """
+    import torch
+
+    from .andes_surrogate import raw_input, swing_residuals
+
+    if samples < 3 or not math.isfinite(fault_duration_s):
+        raise ValueError("Invalid collocation grid or fault duration.")
+    values = (inertia_M, damping_D, frequency_hz)
+    vectors = [np.asarray(v, dtype=float) for v in values]
+    if any(v.shape != (5,) or not np.all(np.isfinite(v)) for v in vectors):
+        raise ValueError("Five finite trusted machine constants required per family.")
+    clear = 1.0 + fault_duration_s
+    candidate = np.linspace(0.0, 2.0, samples)
+    mask = (np.abs(candidate - 1.0) > 0.006) & (
+        np.abs(candidate - clear) > 0.006
+    )
+    if not np.any(mask):
+        raise ValueError("No physics collocation points remain.")
+    x = torch.tensor(
+        raw_input(candidate[mask], fault_duration_s, fault_bus),
+        dtype=torch.float32,
+        requires_grad=True,
+    )
+    delta, omega = swing_residuals(
+        model,
+        x,
+        inertia_M=torch.tensor(vectors[0], dtype=torch.float32),
+        damping_D=torch.tensor(vectors[1], dtype=torch.float32),
+        frequency_hz=torch.tensor(vectors[2], dtype=torch.float32),
+    )
+    score = float(
+        torch.sqrt(torch.mean((delta / 0.2) ** 2) +
+                   torch.mean((omega / 0.05) ** 2)).detach()
+    )
+    if not math.isfinite(score):
+        raise ValueError("Non-finite physics residual.")
+    return score
+
+
+def run_model_case(
+    *,
+    model,
+    fault_bus: int,
+    fault_duration_s: float,
+    residual_threshold: float,
+    inertia_M: np.ndarray,
+    damping_D: np.ndarray,
+    frequency_hz: np.ndarray,
+    reference: Callable[[int, float], object] = andes_reference_fault,
+) -> RuntimeResult:
+    """End-to-end research route with the frozen residual definition.
+
+    For out-of-envelope cases, refuse before evaluating model physics. Any
+    residual-computation failure routes to the independent reference.
+    """
+    preliminary = route_andes_case(
+        fault_bus=fault_bus,
+        fault_duration_s=fault_duration_s,
+        residual_score=0.0,
+        residual_threshold=residual_threshold,
+        model_ready=model is not None,
+    )
+    if not preliminary.use_surrogate:
+        return run_routed_case(
+            fault_bus=fault_bus,
+            fault_duration_s=fault_duration_s,
+            residual_score=float("inf"),
+            residual_threshold=residual_threshold,
+            predict=lambda *args: (_ for _ in ()).throw(
+                RuntimeError("Refused case must not invoke surrogate")
+            ),
+            reference=reference,
+            model_ready=False,
+        )
+    try:
+        residual = compute_model_residual(
+            model,
+            fault_bus=fault_bus,
+            fault_duration_s=fault_duration_s,
+            inertia_M=inertia_M,
+            damping_D=damping_D,
+            frequency_hz=frequency_hz,
+        )
+    except (ValueError, RuntimeError, FloatingPointError):
+        residual = float("inf")
+    return run_routed_case(
+        fault_bus=fault_bus,
+        fault_duration_s=fault_duration_s,
+        residual_score=residual,
+        residual_threshold=residual_threshold,
+        predict=model_prediction(model),
+        reference=reference,
+    )
