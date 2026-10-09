@@ -7,8 +7,9 @@ from gridguardpinn.trust import MahalanobisOOD
 def test_canonical_split_sizes_and_ood_distance():
     splits = canonical_splits()
     assert len(splits["train"]) == 24
-    assert len(splits["validation"]) == 4
-    assert len(splits["ood"]) == 8
+    assert len(splits["validation"]) == 16
+    assert len(splits["test_id"]) == 32
+    assert len(splits["ood"]) == 16
 
     train_x = np.vstack([scenario_vector(case) for case in splits["train"]])
     validation_x = np.vstack([scenario_vector(case) for case in splits["validation"]])
