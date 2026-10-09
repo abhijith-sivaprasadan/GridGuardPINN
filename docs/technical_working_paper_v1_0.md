@@ -29,6 +29,14 @@ This work examines three linked questions:
 
 The main contribution is **not a novel physical power-system model or certified risk estimator**. It is a versioned, reproducible experimental comparison between numerical accuracy, trust decisions, and actual end-to-end cost, with the negative findings retained.
 
+## 1.1. Related work and positioning
+
+Physics-informed neural networks integrate supervised observations with governing-equation residuals, following the general scientific-machine-learning framework presented by **Raissi, Perdikaris and Karniadakis (2019)** [R1]. The reference solver in this project is **ANDES**, a symbolic-numeric dynamic power-system simulation framework described by **Cui, Li and Tomsovic (2021)** [R2]. A recent review by **Xu et al. (2026)** [R3] surveys the broader use of PINNs in power-system modeling, estimation and dynamics.
+
+GridGuardPINN does **not** claim to originate these methods or establish state-of-the-art performance. Its contribution is the documented coupling of a restricted IEEE-14 electromechanical surrogate to a domain-and-residual refusal policy, together with accuracy and end-to-end fallback-cost measurements. This is a targeted literature positioning statement, not a complete systematic literature review. Details and links appear in [the source-verified bibliography](literature_context_v1_0.md).
+
+**External references:** [R1] Raissi, M., Perdikaris, P. & Karniadakis, G. E. (2019), *Journal of Computational Physics* 378, 686–707, doi:10.1016/j.jcp.2018.10.045; [R2] Cui, H., Li, F. & Tomsovic, K. (2021), *IEEE Transactions on Power Systems* 36(2), 1373–1384, doi:10.1109/TPWRS.2020.3017019; [R3] Xu, X. et al. (2026), *Sustainable Energy, Grids and Networks*, doi:10.1016/j.segan.2026.102261.
+
 ## 2. Simulation system and experiment design
 
 ### 2.1 Reference and outputs
