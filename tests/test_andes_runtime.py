@@ -96,3 +96,33 @@ def test_residual_failure_executes_reference_with_specific_reason(monkeypatch):
     assert result.source == "reference"
     assert result.decision.reason == "residual_computation_failed"
     assert result.electromechanical.shape == (401, 20)
+
+
+def test_partial_time_horizon_rejected():
+    with pytest.raises(ValueError, match="time grid"):
+        run_routed_case(**options(time_grid_s=np.linspace(0.1, 1.9, 100)))
+
+
+def test_failed_residual_and_failed_reference_propagates(monkeypatch):
+    import gridguardpinn.andes_runtime as runtime
+
+    monkeypatch.setattr(
+        runtime,
+        "compute_model_residual",
+        lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("residual failed")),
+    )
+
+    def failed_reference(bus, duration):
+        raise RuntimeError("ANDES reference failed")
+
+    with pytest.raises(RuntimeError, match="ANDES reference failed"):
+        runtime.run_model_case(
+            model=object(),
+            fault_bus=3,
+            fault_duration_s=0.08,
+            residual_threshold=0.2,
+            inertia_M=np.ones(5),
+            damping_D=np.ones(5),
+            frequency_hz=np.full(5, 50.0),
+            reference=failed_reference,
+        )
