@@ -71,6 +71,30 @@ The important v0.3 result is therefore not “the surrogate works.” It is:
 
 See [v0.3 result](docs/results_v0_3.md).
 
+
+### v0.4 — Fourier/event-aware surrogate
+
+A third fresh holdout was frozen before increasing model capacity or adding
+Fourier time features.
+
+| Split | Cases | Good cases | Mean composite error ratio | Combined-gate coverage | Combined false accepts |
+|---|---:|---:|---:|---:|---:|
+| Validation | 16 | 12 | 0.795 | 75.0% | 0 |
+| Fresh ID test | 32 | **23** | **0.904** | **65.6%** | **1** |
+| Fresh OOD test | 32 | 12 | 48.07* | 18.8% | 1 |
+
+\* OOD mean is dominated by extreme clearing-time failures; OOD median is 1.162.
+
+On the fresh ID test, always accepting the surrogate would have produced
+9/32 false accepts. The validation-calibrated combined gate reduced that to
+**1/32** while still routing **21/32 cases through the surrogate**.
+
+This is the first version with both majority-case ID accuracy and meaningful
+safe-routing coverage. It is still not fail-safe: one fresh-ID false accept and
+one OOD false accept remain.
+
+See [v0.4 result](docs/results_v0_4.md).
+
 ## Accuracy definition
 
 For the SMIB demonstrator, a trajectory is provisionally labelled acceptable only if both are satisfied:
@@ -141,7 +165,7 @@ A Mahalanobis-distance detector is fit only on training-scenario parameters:
 - fault-clearing time;
 - fault-on transfer ratio.
 
-v0.3 shows why this cannot be the sole safety mechanism: parameter-space proximity does not guarantee trajectory accuracy.
+v0.3 and v0.4 show why this cannot be the sole safety mechanism: parameter-space proximity does not guarantee trajectory accuracy.
 
 ## Gate metrics
 
@@ -205,7 +229,7 @@ Install CPU/GPU PyTorch as appropriate, then:
 
 ```bash
 pip install -e ".[dev]"
-python scripts/run_experiment.py --protocol v0.3 --epochs 1200 --anchors 81 --collocation 64 --seed 7
+python scripts/run_experiment.py --protocol v0.4 --epochs 2500 --anchors 121 --collocation 96 --seed 7
 ```
 
 The GitHub Actions experiment workflow records artifacts including:
