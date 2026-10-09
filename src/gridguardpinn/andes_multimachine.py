@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -14,6 +15,15 @@ class MachineConstants:
     inertia_M: np.ndarray
     damping_D: np.ndarray
     frequency_hz: np.ndarray
+
+
+@dataclass(frozen=True)
+class ReferenceBatch:
+    """Reference trajectories plus measured wall-clock cost for each case."""
+
+    trajectories: dict
+    case_seconds: dict
+    total_seconds: float
 
 
 def event_aware_times(
@@ -135,13 +145,17 @@ def collocation_array(
     return np.vstack(rows)
 
 
-def generate_reference_map(cases, *, samples: int = 401):
-    """Run frozen cases; any unexpected reference failure aborts the experiment."""
+def generate_reference_batch(cases, *, samples: int = 401) -> ReferenceBatch:
+    """Run frozen cases and record per-case reference-simulation wall time."""
     from .andes_reference import resample_trajectory, run_ieee14_fault
 
     grid = np.linspace(0.0, 2.0, samples)
     reference_map = {}
+    case_seconds = {}
+    started = time.perf_counter()
+
     for case in cases:
+        case_started = time.perf_counter()
         native = run_ieee14_fault(
             fault_bus=case.fault_bus,
             fault_start_s=1.0,
@@ -152,5 +166,16 @@ def generate_reference_map(cases, *, samples: int = 401):
         sampled = resample_trajectory(native, time_grid_s=grid)
         target_matrix(sampled)
         reference_map[case] = sampled
+        case_seconds[case] = time.perf_counter() - case_started
+
     machine_constants(reference_map)
-    return reference_map
+    return ReferenceBatch(
+        trajectories=reference_map,
+        case_seconds=case_seconds,
+        total_seconds=time.perf_counter() - started,
+    )
+
+
+def generate_reference_map(cases, *, samples: int = 401):
+    """Backward-compatible trajectory-only wrapper."""
+    return generate_reference_batch(cases, samples=samples).trajectories
