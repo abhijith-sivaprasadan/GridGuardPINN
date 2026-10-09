@@ -103,6 +103,25 @@ The central v0.1 result is therefore:
 - v0.1 did not record per-case surrogate inference timing. Timing instrumentation
   was added before the pre-registered v0.2 ablation.
 
+## Reproducibility and timing check
+
+After refactoring the experiment runner, workflow run **37912546737** repeated the
+same seed-17 experiment. All reported trajectory metrics, residual/error
+correlations, and the calibrated residual threshold matched the untouched
+artifact exactly at the stored floating-point values.
+
+The refactored run also separated pure ANDES solve timing from preprocessing:
+
+- 63 ANDES solves: **50.01 s** total;
+- median ANDES solve per case: **0.678 s**;
+- median 401-point neural forward pass: about **0.00043 s** across splits;
+- median reference-solve / forward-pass ratio: about **1.35e3 to 1.66e3x**
+  depending on split.
+
+This ratio compares the neural network forward pass with the full ANDES
+case solve. It is a research timing measurement on the same GitHub Actions CPU
+runner, not a production latency or end-to-end service benchmark.
+
 ## Frozen next step
 
 Do not tune the v0.1 model or gate around these held-out observations.
