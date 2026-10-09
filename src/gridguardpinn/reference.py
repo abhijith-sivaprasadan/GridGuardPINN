@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import pairwise
 
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -48,7 +49,7 @@ def simulate_reference(
     y0 = scenario.initial_state.copy()
 
     boundaries = [0.0, scenario.t_fault, scenario.t_clear, scenario.t_end]
-    for index, (start, end) in enumerate(zip(boundaries[:-1], boundaries[1:])):
+    for index, (start, end) in enumerate(pairwise(boundaries)):
         if end <= start:
             continue
 
@@ -58,7 +59,9 @@ def simulate_reference(
             segment_max_step = min(0.01, (end - start) / 20.0)
 
         solution = solve_ivp(
-            lambda t, y: state_derivative(t, y, scenario, fixed_pmax=pmax),
+            lambda t, y, pmax=pmax: state_derivative(
+                t, y, scenario, fixed_pmax=pmax
+            ),
             (start, end),
             y0,
             method="RK45",
