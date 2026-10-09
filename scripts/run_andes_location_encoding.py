@@ -15,7 +15,6 @@ from gridguardpinn.andes_multimachine import generate_reference_batch
 from gridguardpinn.andes_surrogate_protocol import assert_protocol_integrity, surrogate_splits_v01
 from gridguardpinn.andes_training import AndesTrainingConfig
 
-
 ARMS = ("one_hot", "network_aware")
 SPLITS = ("validation", "test_id", "ood_duration", "ood_location")
 
