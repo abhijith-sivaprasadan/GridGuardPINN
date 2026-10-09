@@ -28,11 +28,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev,andes]"
-      - name: Run Kundur fault reference
+      - name: Run IEEE-14 fault reference cross-check
         run: python scripts/run_andes_smoke.py
       - name: Upload transient reference
         uses: actions/upload-artifact@v4
         with:
-          name: gridguardpinn-andes-kundur-reference
-          path: artifacts/andes_kundur_smoke/
+          name: gridguardpinn-andes-ieee14-reference
+          path: artifacts/andes_ieee14_smoke/
           retention-days: 30
