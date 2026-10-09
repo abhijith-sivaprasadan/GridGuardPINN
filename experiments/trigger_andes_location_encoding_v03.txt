@@ -1,0 +1,4 @@
+Trigger pre-registered ANDES fault-location encoding experiment v0.3.
+Frozen arms: one_hot and network_aware; seeds 17 29 41; 1000 epochs.
+Protocol: docs/andes_location_encoding_plan_v0_3.md.
+This trigger is committed after green core CI on 0ab26611.
