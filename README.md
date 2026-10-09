@@ -120,8 +120,27 @@ signal can remain selective without becoming over-conservative**. The
 pre-registered data-only vs physics-informed ablation is now executable across
 the frozen seeds 17/29/41.
 
-See [ANDES surrogate v0.1 result](docs/results_andes_surrogate_v0_1.md) and the
-[pre-registered v0.2 ablation](docs/andes_surrogate_ablation_plan_v0_2.md).
+See [ANDES surrogate v0.1 result](docs/results_andes_surrogate_v0_1.md).
+
+### Pre-registered physics ablation v0.2
+
+The three-seed data-only vs physics-informed comparison is now complete. Both
+arms pass all validation, fresh-ID, and 0.14 s duration-OOD cases, while both
+fail every unseen-location case with the current categorical bus encoding.
+
+The physics-informed arm produces a consistent **11.9-19.8% reduction in
+fresh-ID mean composite error across seeds 17/29/41**, but duration-OOD
+mean-error benefit is mixed and residual/error ranking is not consistently
+better. The validation-calibrated residual gate still rejects almost every
+accurate duration-OOD case. Physics-informed training costs about **6.2x** more
+than data-only training with essentially identical inference cost.
+
+That is the current research result: swing-equation regularisation improves
+trained-location precision, but the trust layer and fault-location
+representation remain the real bottlenecks.
+
+See the [v0.2 ablation result](docs/results_andes_surrogate_ablation_v0_2.md)
+and its [pre-registration](docs/andes_surrogate_ablation_plan_v0_2.md).
 
 ## Accuracy definition
 
