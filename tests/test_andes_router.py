@@ -6,12 +6,12 @@ from gridguardpinn.andes_router import Route, route_andes_case
 
 
 def decide(**overrides):
-    args = dict(
-        fault_bus=3,
-        fault_duration_s=0.08,
-        residual_score=0.1,
-        residual_threshold=0.2,
-    )
+    args = {
+        "fault_bus": 3,
+        "fault_duration_s": 0.08,
+        "residual_score": 0.1,
+        "residual_threshold": 0.2,
+    }
     args.update(overrides)
     return route_andes_case(**args)
 
