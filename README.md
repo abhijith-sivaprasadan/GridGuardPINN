@@ -95,6 +95,34 @@ one OOD false accept remain.
 
 See [v0.4 result](docs/results_v0_4.md).
 
+### ANDES multi-machine surrogate v0.1
+
+The first frozen IEEE-14 multi-machine surrogate is a 20-output model covering
+five GENROU machines' rotor angle, speed, mechanical torque, and electrical
+torque. The untouched seed-17 result was substantially stronger than the SMIB
+development sequence:
+
+| Split | Cases | Good cases | Mean composite ratio | Residual/error Spearman rho |
+|---|---:|---:|---:|---:|
+| Validation | 7 | **7/7** | 0.146 | 0.714 |
+| Fresh ID test | 7 | **7/7** | 0.152 | 0.786 |
+| Duration OOD (0.14 s) | 7 | **7/7** | 0.420 | 0.643 |
+| Unseen-location edge set | 21 | **0/21** | 6.079 | 0.412 |
+
+The important trust result is mixed. The validation-calibrated residual gate
+made zero false accepts, but accepted only 4/7 fresh-ID cases and rejected all
+seven accurate duration-OOD cases. In contrast, always accepting unseen fault
+locations would have produced 21/21 false accepts.
+
+This shifts the research bottleneck from basic trained-location surrogate
+accuracy to **whether physics improves generalisation and whether the trust
+signal can remain selective without becoming over-conservative**. The
+pre-registered data-only vs physics-informed ablation is now executable across
+the frozen seeds 17/29/41.
+
+See [ANDES surrogate v0.1 result](docs/results_andes_surrogate_v0_1.md) and the
+[pre-registered v0.2 ablation](docs/andes_surrogate_ablation_plan_v0_2.md).
+
 ## Accuracy definition
 
 For the SMIB demonstrator, a trajectory is provisionally labelled acceptable only if both are satisfied:
