@@ -13,9 +13,7 @@ from gridguardpinn.andes_experiment import (
     run_surrogate_experiment,
     write_experiment_artifacts,
 )
-from gridguardpinn.andes_location_features import (
-    build_ieee14_fault_location_features,
-)
+from gridguardpinn.andes_location_features import build_ieee14_fault_location_features
 from gridguardpinn.andes_multimachine import generate_reference_batch
 from gridguardpinn.andes_surrogate_protocol import (
     assert_protocol_integrity,
