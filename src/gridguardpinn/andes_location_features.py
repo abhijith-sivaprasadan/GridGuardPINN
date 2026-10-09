@@ -10,7 +10,6 @@ import numpy as np
 
 from .andes_surrogate import N_BUSES, N_GENERATORS
 
-
 FEATURE_NAMES = (
     "zdist_gen_1",
     "zdist_gen_2",
