@@ -9,10 +9,11 @@
 - Three-seed pre-registered physics ablation v0.2 and fault-location descriptor experiment v0.3, with explicit negative results.
 - Audit of routing errors, including unsafe residual-only accepts for unseen fault locations.
 - `route_andes_case`: deterministic fail-closed eligibility check that rejects unseen buses, unsupported fault durations, invalid inputs, invalid residual scores, and unready models.
+- `andes_runtime`: digest-pinned checkpoint loading and an executable surrogate/reference routing adapter, with reference errors propagated rather than hidden. See [runtime limitations](v1_0_runtime.md).
 
 ## Scope boundaries
 
-The routing function provides **a policy decision, not an execution engine**: the calling application is responsible for running the trusted ANDES reference solver after rejection, for validating model provenance, and for handling a missing reference solver as a stop/error. The function does **not** claim risk bounds for apparently in-distribution cases. Validation calibration on a handful of cases cannot establish zero failure probability.
+The `andes_router` function provides a policy decision, while `andes_runtime.run_routed_case` now executes either a prediction callback or a reference callback. The calling application must still provide a trusted physics-residual score, a validated model, and an operational reference solver; reference failures propagate as errors. The function does **not** claim risk bounds for apparently in-distribution cases. Validation calibration on a handful of cases cannot establish zero failure probability.
 
 The v0.3 unseen-location improvement cannot be marketed as safe unseen-location coverage because residual-only gating produced false accepts. The conservative default therefore **always rejects unseen buses**. Duration shift is likewise rejected.
 
@@ -27,6 +28,6 @@ The v0.3 unseen-location improvement cannot be marketed as safe unseen-location 
 
 - No held-out guarantee of zero false accepts; strict route has not been certified.
 - Current evaluated accuracy tolerances are project-internal screening limits.
-- No high-level packaged inference application with reference fallback and checkpoint provenance verification yet.
+- A basic executable reference-fallback adapter and digest-pinned checkpoint loader now exist, but live physics-residual computation, a dedicated CLI, and an end-to-end actual-ANDES benchmark remain outstanding.
 - ANDES convergence failures in reference sweeps must be surfaced, never silently classified as correct trajectories.
 - Next scientific milestone: new pre-registered trust-policy evaluation with broader fault topologies, temporal ranges, more seeds, and uncertainty estimates. Do not tune to the inspected v0.3 holdout.
