@@ -16,6 +16,7 @@ def _trajectory():
         fault_start_s=0.2,
         fault_clear_s=0.3,
         andes_version="test",
+        case_name="synthetic-test",
     )
 
 
