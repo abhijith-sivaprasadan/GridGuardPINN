@@ -10,6 +10,9 @@ import numpy as np
 
 from gridguardpinn.andes_runtime import load_checkpoint, run_model_case, sha256_file
 
+FROZEN_ANDES_200_CASE_SHA256 = "2c6c792c29f0e8a13301b1b029f2289f940b0fd5a765c934c25d1ce83948bd7b"
+FROZEN_GENERATOR_BUSES = (1, 2, 3, 6, 8)
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -38,6 +41,10 @@ def main() -> None:
     if any(array.shape != (5,) or not np.all(np.isfinite(array)) for array in constants.values()):
         raise RuntimeError("Invalid machine constants from canonical ANDES case")
     case_sha256 = sha256_file(case_file)
+    if str(andes.__version__) != "2.0.0" or case_sha256 != FROZEN_ANDES_200_CASE_SHA256:
+        raise RuntimeError("ANDES case version or SHA-256 differs from frozen IEEE-14 testbed")
+    if generator_buses != FROZEN_GENERATOR_BUSES:
+        raise RuntimeError("Ordered GENROU generator buses differ from frozen IEEE-14 testbed")
     model, threshold, summary = load_checkpoint(
         args.checkpoint,
         expected_sha256=args.sha256,
