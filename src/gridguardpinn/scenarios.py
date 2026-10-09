@@ -122,6 +122,35 @@ def splits_v03() -> dict[str, list[SMIBScenario]]:
     return {"train": train, "validation": validation, "test_id": test_id, "ood": ood}
 
 
+def splits_v04() -> dict[str, list[SMIBScenario]]:
+    """Fresh v0.4 held-out sets frozen before the v0.4 architecture changes."""
+    train, validation = _train_and_validation()
+    rng = np.random.default_rng(20261010)
+
+    test_id = [_random_id_case(rng) for _ in range(32)]
+
+    ood: list[SMIBScenario] = []
+    for factor in ("H", "D", "t_clear", "fault_ratio"):
+        for index in range(8):
+            case = _random_id_case(rng)
+            low_side = index % 2 == 0
+            if factor == "H":
+                value = rng.uniform(3.0, 3.8) if low_side else rng.uniform(6.2, 7.0)
+                case = replace(case, H=float(value))
+            elif factor == "D":
+                value = rng.uniform(0.45, 0.72) if low_side else rng.uniform(1.28, 1.60)
+                case = replace(case, D=float(value))
+            elif factor == "t_clear":
+                value = rng.uniform(0.135, 0.162) if low_side else rng.uniform(0.222, 0.255)
+                case = replace(case, t_clear=float(value))
+            else:
+                ratio = rng.uniform(0.06, 0.095) if low_side else rng.uniform(0.26, 0.33)
+                case = replace(case, Pmax_fault=case.Pmax_pre * float(ratio))
+            ood.append(case)
+
+    return {"train": train, "validation": validation, "test_id": test_id, "ood": ood}
+
+
 def classify_ood_factors(scenario: SMIBScenario) -> str:
     factors: list[str] = []
     ratio = scenario.Pmax_fault / scenario.Pmax_pre
