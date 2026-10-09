@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +25,9 @@ class RuntimeResult:
     time_s: np.ndarray
     electromechanical: np.ndarray | None
     reference: object | None
+    residual_score: float | None = None
+    residual_threshold: float | None = None
+    reference_seconds: float | None = None
 
 
 def sha256_file(path: str | Path) -> str:
@@ -125,9 +129,11 @@ def run_routed_case(
         except (ValueError, RuntimeError, FloatingPointError):
             decision = RoutingDecision(Route.RUN_REFERENCE, "surrogate_prediction_failed")
         else:
-            return RuntimeResult("surrogate", decision, grid, prediction, None)
+            return RuntimeResult("surrogate", decision, grid, prediction, None, residual_score, residual_threshold, None)
     # Reference failure is an explicit error; never silently return a surrogate.
+    reference_started = time.perf_counter()
     native = reference(fault_bus, fault_duration_s)
+    reference_seconds = time.perf_counter() - reference_started
     from .andes_reference import resample_trajectory
     sampled = resample_trajectory(native, time_grid_s=grid)
     channels = (
@@ -141,7 +147,7 @@ def run_routed_case(
     values = np.column_stack(channels)
     if not np.all(np.isfinite(values)):
         raise RuntimeError("Reference simulator returned non-finite outputs.")
-    return RuntimeResult("reference", decision, grid, values, sampled)
+    return RuntimeResult("reference", decision, grid, values, sampled, residual_score, residual_threshold, reference_seconds)
 
 
 def andes_reference_fault(fault_bus: int, fault_duration_s: float):
@@ -287,6 +293,9 @@ def run_model_case(
             time_s=fallback.time_s,
             electromechanical=fallback.electromechanical,
             reference=fallback.reference,
+            residual_score=None,
+            residual_threshold=residual_threshold,
+            reference_seconds=fallback.reference_seconds,
         )
     return run_routed_case(
         fault_bus=fault_bus,
