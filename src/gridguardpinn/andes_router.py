@@ -54,11 +54,10 @@ def route_andes_case(
     if type(fault_bus) is not int or fault_bus not in TRAIN_BUSES:
         return RoutingDecision(Route.RUN_REFERENCE, "unseen_fault_bus")
     values = (fault_duration_s, residual_score, residual_threshold)
-    try:
-        if not all(math.isfinite(float(value)) for value in values):
-            return RoutingDecision(Route.RUN_REFERENCE, "non_finite_input")
-    except (TypeError, ValueError, OverflowError):
+    if any(type(value) not in (int, float) for value in values):
         return RoutingDecision(Route.RUN_REFERENCE, "invalid_input")
+    if not all(math.isfinite(value) for value in values):
+        return RoutingDecision(Route.RUN_REFERENCE, "non_finite_input")
     if not MIN_FAULT_DURATION_S <= fault_duration_s <= MAX_FAULT_DURATION_S:
         return RoutingDecision(Route.RUN_REFERENCE, "duration_outside_envelope")
     if residual_threshold < 0 or residual_score < 0:
