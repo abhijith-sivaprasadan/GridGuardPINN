@@ -106,8 +106,8 @@ def build_collocation_points(
     phase_stratified: bool = True,
 ) -> np.ndarray:
     """Sample fixed collocation points with explicit fault-phase coverage."""
-    if points_per_case < 12:
-        raise ValueError("points_per_case must be at least 12.")
+    if points_per_case < 14:
+        raise ValueError("points_per_case must be at least 14.")
     if event_exclusion_s < 0:
         raise ValueError("event_exclusion_s must be non-negative.")
 
