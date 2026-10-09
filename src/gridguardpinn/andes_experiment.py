@@ -148,7 +148,8 @@ def run_surrogate_experiment(
             for name, cases in splits.items()
         },
         "reference_generation": {
-            "total_seconds": reference_batch.total_seconds,
+            "andes_solve_total_seconds": reference_batch.total_seconds,
+            "pipeline_total_seconds": reference_batch.pipeline_seconds,
             **_timing_summary(reference_batch.case_seconds.values()),
         },
         "training": training.metadata(),
