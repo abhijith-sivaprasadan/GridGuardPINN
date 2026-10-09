@@ -1,4 +1,4 @@
-"""Reproducible in-distribution and out-of-distribution SMIB scenarios."""
+"""Frozen scenario protocols for the parametric SMIB experiment."""
 
 from __future__ import annotations
 
@@ -11,12 +11,9 @@ from .dynamics import SMIBScenario
 
 
 def scenario_vector(scenario: SMIBScenario) -> np.ndarray:
-    """Feature vector used by the first OOD model."""
+    """Feature vector used by the parameter-space OOD detector."""
     fault_ratio = scenario.Pmax_fault / scenario.Pmax_pre
-    return np.asarray(
-        [scenario.H, scenario.D, scenario.t_clear, fault_ratio],
-        dtype=float,
-    )
+    return np.asarray([scenario.H, scenario.D, scenario.t_clear, fault_ratio], dtype=float)
 
 
 def make_grid(
@@ -45,11 +42,7 @@ def make_grid(
 
 
 def canonical_splits() -> dict[str, list[SMIBScenario]]:
-    """Return frozen v0.1 scenario splits.
-
-    Thresholds may be tuned on train/validation only. The OOD split is intended
-    for final stress testing and must not be used to tune trust thresholds.
-    """
+    """Frozen v0.2 train/calibration/test protocol."""
     train = make_grid(
         H_values=(4.0, 5.0, 6.0),
         D_values=(0.8, 1.2),
@@ -57,15 +50,21 @@ def canonical_splits() -> dict[str, list[SMIBScenario]]:
         fault_ratio_values=(0.10, 0.25),
     )
     validation = make_grid(
-        H_values=(4.5, 5.5),
-        D_values=(1.0,),
-        t_clear_values=(0.19, 0.23),
+        H_values=(4.25, 4.75, 5.25, 5.75),
+        D_values=(0.9, 1.1),
+        t_clear_values=(0.18, 0.22),
         fault_ratio_values=(0.175,),
+    )
+    test_id = make_grid(
+        H_values=(4.5, 5.5),
+        D_values=(0.85, 1.15),
+        t_clear_values=(0.185, 0.215),
+        fault_ratio_values=(0.14, 0.21),
     )
     ood = make_grid(
         H_values=(2.5, 7.5),
         D_values=(0.3, 1.8),
-        t_clear_values=(0.27,),
+        t_clear_values=(0.14, 0.27),
         fault_ratio_values=(0.05, 0.35),
     )
-    return {"train": train, "validation": validation, "ood": ood}
+    return {"train": train, "validation": validation, "test_id": test_id, "ood": ood}
