@@ -81,6 +81,8 @@ def main() -> None:
         "case_name": "ieee14/ieee14.json",
         "ordered_generator_buses": generator_buses,
         "residual_threshold": threshold,
+        "residual_score": result.residual_score,
+        "reference_seconds": result.reference_seconds,
         "reference_includes_bus_voltage": result.reference is not None,
         "warning": "Research-only screening; not an operational safety determination",
     }
