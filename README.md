@@ -243,9 +243,9 @@ The GitHub Actions experiment workflow records artifacts including:
 
 The reduced-order SMIB phase is now complemented by a CI-verified **ANDES 2.0.0 IEEE-14 transient-stability reference path**.
 
-The first frozen location/duration sweep evaluated 18 three-phase-fault cases across six buses and three clearing durations. **11/18 completed successfully and 7/18 were retained as explicit simulator failures**, rather than silently removed. The next frozen sweep expands this feasibility map to all 14 IEEE-14 buses and six fault durations while also exporting GENROU rotor-angle trajectories for physics-informed residual work.
+The first frozen location/duration sweep evaluated 18 three-phase-fault cases across six buses and three clearing durations. **11/18 completed successfully and 7/18 were retained as explicit simulator failures**, rather than silently removed. The expanded frozen sweep then evaluated **84 cases across all 14 buses and six durations: 63/84 succeeded (75%)**. Seven buses (3, 6, 7, 8, 9, 11, 14) completed all six durations, creating a 42-case robust core domain for the first multi-machine surrogate protocol.
 
-See [ANDES reference result](docs/results_andes_reference_v0_1.md), [18-case sweep result](docs/results_andes_sweep_v0_1.md), and [84-case sweep protocol](docs/andes_sweep_protocol_v0_2.md).
+See [ANDES reference result](docs/results_andes_reference_v0_1.md), [18-case sweep result](docs/results_andes_sweep_v0_1.md), [84-case sweep result](docs/results_andes_sweep_v0_2.md), and the frozen [multi-machine surrogate protocol](docs/andes_surrogate_protocol_v0_1.md).
 
 ## Roadmap
 
