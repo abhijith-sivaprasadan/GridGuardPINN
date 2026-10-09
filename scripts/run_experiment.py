@@ -16,7 +16,7 @@ from scipy.stats import spearmanr
 
 from gridguardpinn.calibration import baseline_reports, calibrate_gate
 from gridguardpinn.evaluation import evaluate_split
-from gridguardpinn.scenarios import scenario_vector, splits_v02, splits_v03
+from gridguardpinn.scenarios import scenario_vector, splits_v02, splits_v03, splits_v04
 from gridguardpinn.training import TrainingConfig, train_parametric_pinn
 from gridguardpinn.trust import MahalanobisOOD
 
@@ -60,10 +60,10 @@ def json_safe(value):
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--protocol", choices=("v0.2", "v0.3"), default="v0.3")
-    parser.add_argument("--epochs", type=int, default=1200)
-    parser.add_argument("--anchors", type=int, default=81)
-    parser.add_argument("--collocation", type=int, default=64)
+    parser.add_argument("--protocol", choices=("v0.2", "v0.3", "v0.4"), default="v0.4")
+    parser.add_argument("--epochs", type=int, default=2500)
+    parser.add_argument("--anchors", type=int, default=121)
+    parser.add_argument("--collocation", type=int, default=96)
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--output-dir")
     args = parser.parse_args()
@@ -71,14 +71,14 @@ def main() -> None:
     output = Path(args.output_dir or f"artifacts/experiment_{args.protocol.replace('.', '_')}")
     output.mkdir(parents=True, exist_ok=True)
 
-    splits = splits_v03() if args.protocol == "v0.3" else splits_v02()
+    splits = {"v0.2": splits_v02, "v0.3": splits_v03, "v0.4": splits_v04}[args.protocol]()
     config = TrainingConfig(
         epochs=args.epochs,
         anchors_per_case=args.anchors,
         collocation_per_case=args.collocation,
         seed=args.seed,
     )
-    training = train_parametric_pinn(splits["train"], config=config)
+    training = train_parametric_pinn(\n        splits["train"],\n        config=config,\n        validation_scenarios=splits["validation"] if args.protocol == "v0.4" else None,\n    )
 
     train_vectors = np.vstack([scenario_vector(case) for case in splits["train"]])
     detector = MahalanobisOOD().fit(train_vectors)
