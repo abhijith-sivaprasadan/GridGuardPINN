@@ -1,4 +1,4 @@
-"""Training loop for the frozen parametric PINN experiment."""
+"""Training loop for the parametric PINN experiments."""
 
 from __future__ import annotations
 
@@ -18,16 +18,21 @@ from .pinn import ParametricPINN, normalized_physics_loss
 
 @dataclass(frozen=True)
 class TrainingConfig:
-    epochs: int = 500
-    anchors_per_case: int = 61
-    collocation_per_case: int = 48
+    epochs: int = 1200
+    anchors_per_case: int = 81
+    collocation_per_case: int = 64
     learning_rate: float = 1e-3
+    final_learning_rate: float = 1e-4
     physics_weight: float = 0.1
+    physics_warmup_epochs: int = 150
+    physics_ramp_epochs: int = 350
     delta_data_scale: float = 0.5
     omega_data_scale: float = 0.005
     seed: int = 7
     hidden_width: int = 64
     hidden_layers: int = 4
+    event_aware_sampling: bool = True
+    phase_stratified_collocation: bool = True
 
 
 @dataclass
@@ -46,6 +51,15 @@ class TrainingResult:
         }
 
 
+def _physics_weight(epoch: int, config: TrainingConfig) -> float:
+    if epoch <= config.physics_warmup_epochs:
+        return 0.0
+    progress = (epoch - config.physics_warmup_epochs) / max(
+        1, config.physics_ramp_epochs
+    )
+    return config.physics_weight * min(1.0, max(0.0, progress))
+
+
 def train_parametric_pinn(
     scenarios: list[SMIBScenario],
     *,
@@ -56,12 +70,15 @@ def train_parametric_pinn(
     torch.set_num_threads(1)
 
     supervised = build_supervised_dataset(
-        scenarios, samples_per_case=config.anchors_per_case
+        scenarios,
+        samples_per_case=config.anchors_per_case,
+        event_aware=config.event_aware_sampling,
     )
     collocation = build_collocation_points(
         scenarios,
         points_per_case=config.collocation_per_case,
         seed=config.seed,
+        phase_stratified=config.phase_stratified_collocation,
     )
     centre, scale = normalization_from_training(supervised.x)
 
@@ -76,9 +93,14 @@ def train_parametric_pinn(
         hidden_width=config.hidden_width,
         hidden_layers=config.hidden_layers,
         delta0=base.initial_delta,
-        t_end=base.t_end,
+        t_fault=base.t_fault,
     )
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer,
+        T_max=config.epochs,
+        eta_min=config.final_learning_rate,
+    )
 
     history: list[dict[str, float]] = []
     for epoch in range(1, config.epochs + 1):
@@ -92,11 +114,14 @@ def train_parametric_pinn(
             ((prediction[:, 1] - y_data[:, 1]) / config.omega_data_scale) ** 2
         )
         data_loss = delta_loss + omega_loss
+
         physics_loss = normalized_physics_loss(model, x_phys)
-        total_loss = data_loss + config.physics_weight * physics_loss
+        physics_weight = _physics_weight(epoch, config)
+        total_loss = data_loss + physics_weight * physics_loss
 
         total_loss.backward()
         optimizer.step()
+        scheduler.step()
 
         if epoch == 1 or epoch % 25 == 0 or epoch == config.epochs:
             history.append(
@@ -104,7 +129,11 @@ def train_parametric_pinn(
                     "epoch": float(epoch),
                     "loss": float(total_loss.detach()),
                     "data_loss": float(data_loss.detach()),
+                    "delta_data_loss": float(delta_loss.detach()),
+                    "omega_data_loss": float(omega_loss.detach()),
                     "physics_loss": float(physics_loss.detach()),
+                    "physics_weight": float(physics_weight),
+                    "learning_rate": float(optimizer.param_groups[0]["lr"]),
                 }
             )
     return TrainingResult(model, history, config, centre, scale)
