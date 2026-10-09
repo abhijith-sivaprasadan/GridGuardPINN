@@ -126,3 +126,14 @@ def test_failed_residual_and_failed_reference_propagates(monkeypatch):
             frequency_hz=np.full(5, 50.0),
             reference=failed_reference,
         )
+
+
+def test_runtime_provenance_is_recorded():
+    accepted = run_routed_case(**options())
+    assert accepted.residual_score == 0.1
+    assert accepted.residual_threshold == 0.2
+    assert accepted.reference_seconds is None
+    fallback = run_routed_case(**options(fault_duration_s=0.14))
+    assert fallback.residual_threshold == 0.2
+    assert fallback.reference_seconds is not None
+    assert fallback.reference_seconds >= 0
