@@ -36,11 +36,7 @@ def simulate_reference(
     atol: float = 1e-11,
     max_step: float | None = None,
 ) -> SimulationResult:
-    """Integrate each piecewise-smooth interval separately.
-
-    Segmenting exactly at fault application and clearing avoids asking an
-    adaptive ODE solver to step blindly across the discontinuous transfer limit.
-    """
+    """Integrate each piecewise-smooth interval separately."""
     if samples < 3:
         raise ValueError("samples must be at least 3.")
 
@@ -77,7 +73,10 @@ def simulate_reference(
             mask = (times >= start) & (times <= end)
         else:
             mask = (times > start) & (times <= end)
-        states[mask] = solution.sol(times[mask]).T
+
+        if np.any(mask):
+            states[mask] = solution.sol(times[mask]).T
+
         y0 = solution.y[:, -1]
 
     if not np.all(np.isfinite(states)):
