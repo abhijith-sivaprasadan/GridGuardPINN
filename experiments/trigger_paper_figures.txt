@@ -1,0 +1,1 @@
+Generate source-grounded publication vector figures from frozen reported values.
