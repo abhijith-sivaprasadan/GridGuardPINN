@@ -99,6 +99,8 @@ def run_surrogate_experiment(
     config: AndesTrainingConfig,
     protocol: str,
     run_label: str | None = None,
+    fault_descriptors: dict[int, np.ndarray] | None = None,
+    experiment_metadata: dict[str, object] | None = None,
 ) -> AndesExperimentResult:
     """Train one arm, evaluate frozen splits, and calibrate the gate on validation only."""
     reference_map = reference_batch.trajectories
@@ -107,6 +109,7 @@ def run_surrogate_experiment(
         splits["train"],
         splits["validation"],
         config=config,
+        fault_descriptors=fault_descriptors,
     )
 
     rows_by_split: dict[str, list[dict[str, object]]] = {}
@@ -122,6 +125,7 @@ def run_surrogate_experiment(
             reference_map,
             cases,
             split=split_name,
+            fault_descriptors=fault_descriptors,
         )
         for row, case in zip(rows, cases, strict=True):
             row["reference_simulation_seconds"] = float(
@@ -143,6 +147,7 @@ def run_surrogate_experiment(
         "protocol": protocol,
         "run_label": run_label,
         "git_sha": os.environ.get("GITHUB_SHA"),
+        "experiment_metadata": experiment_metadata or {},
         "split_sizes": {
             name: len(cases)
             for name, cases in splits.items()
