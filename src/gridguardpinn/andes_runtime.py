@@ -269,7 +269,25 @@ def run_model_case(
             frequency_hz=frequency_hz,
         )
     except (ValueError, RuntimeError, FloatingPointError):
-        residual = float("inf")
+        # Preserve the underlying *category* in the route ledger rather than
+        # mislabelling a physics-evaluation failure as a non-finite user input.
+        fallback = run_routed_case(
+            fault_bus=fault_bus,
+            fault_duration_s=fault_duration_s,
+            residual_score=float("inf"),
+            residual_threshold=residual_threshold,
+            predict=lambda *args: (_ for _ in ()).throw(
+                RuntimeError("Residual failed; surrogate must not execute")
+            ),
+            reference=reference,
+        )
+        return RuntimeResult(
+            source=fallback.source,
+            decision=RoutingDecision(Route.RUN_REFERENCE, "residual_computation_failed"),
+            time_s=fallback.time_s,
+            electromechanical=fallback.electromechanical,
+            reference=fallback.reference,
+        )
     return run_routed_case(
         fault_bus=fault_bus,
         fault_duration_s=fault_duration_s,
