@@ -114,6 +114,7 @@ def supervised_arrays(
     cases,
     *,
     anchors_per_case: int,
+    fault_descriptors: dict[int, np.ndarray] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     from .andes_reference import resample_trajectory
 
@@ -123,7 +124,19 @@ def supervised_arrays(
         trajectory = reference_map[case]
         times = event_aware_times(case.fault_duration_s, anchors_per_case)
         sampled = resample_trajectory(trajectory, time_grid_s=times)
-        x_rows.append(raw_input(times, case.fault_duration_s, case.fault_bus))
+        descriptor = (
+            None
+            if fault_descriptors is None
+            else fault_descriptors[case.fault_bus]
+        )
+        x_rows.append(
+            raw_input(
+                times,
+                case.fault_duration_s,
+                case.fault_bus,
+                fault_descriptor=descriptor,
+            )
+        )
         y_rows.append(target_matrix(sampled))
     return np.vstack(x_rows), np.vstack(y_rows)
 
@@ -133,6 +146,7 @@ def collocation_array(
     *,
     points_per_case: int,
     seed: int,
+    fault_descriptors: dict[int, np.ndarray] | None = None,
 ) -> np.ndarray:
     rng = np.random.default_rng(seed)
     rows = []
@@ -142,7 +156,19 @@ def collocation_array(
             points=points_per_case,
             rng=rng,
         )
-        rows.append(raw_input(times, case.fault_duration_s, case.fault_bus))
+        descriptor = (
+            None
+            if fault_descriptors is None
+            else fault_descriptors[case.fault_bus]
+        )
+        rows.append(
+            raw_input(
+                times,
+                case.fault_duration_s,
+                case.fault_bus,
+                fault_descriptor=descriptor,
+            )
+        )
     return np.vstack(rows)
 
 
