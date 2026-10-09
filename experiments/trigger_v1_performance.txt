@@ -1,0 +1,1 @@
+Execute the frozen full-route performance protocol using original SHA-256 pinned one-hot checkpoints. Report actual ANDES-only, forward-only, and hybrid runtimes, including fallbacks and failures.
