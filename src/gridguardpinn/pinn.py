@@ -10,7 +10,7 @@ from torch import nn
 
 
 class ParametricPINN(nn.Module):
-    """MLP conditioned on time and four scenario parameters."""
+    """Event-aware MLP conditioned on time and four scenario parameters."""
 
     def __init__(
         self,
@@ -20,30 +20,49 @@ class ParametricPINN(nn.Module):
         hidden_width: int = 64,
         hidden_layers: int = 4,
         delta0: float,
-        t_end: float = 5.0,
+        t_fault: float = 0.10,
         delta_output_scale: float = 1.0,
         omega_output_scale: float = 0.01,
+        initial_condition_tau_s: float = 0.15,
     ) -> None:
         super().__init__()
         self.register_buffer("centre", torch.as_tensor(centre, dtype=torch.float32))
         self.register_buffer("scale", torch.as_tensor(scale, dtype=torch.float32))
         self.delta0 = float(delta0)
-        self.t_end = float(t_end)
+        self.t_fault = float(t_fault)
         self.delta_output_scale = float(delta_output_scale)
         self.omega_output_scale = float(omega_output_scale)
+        self.initial_condition_tau_s = float(initial_condition_tau_s)
 
-        layers: list[nn.Module] = [nn.Linear(5, hidden_width), nn.Tanh()]
+        # Five normalized physical inputs plus four event-aware features.
+        layers: list[nn.Module] = [nn.Linear(9, hidden_width), nn.Tanh()]
         for _ in range(hidden_layers - 1):
             layers.extend([nn.Linear(hidden_width, hidden_width), nn.Tanh()])
         layers.append(nn.Linear(hidden_width, 2))
         self.network = nn.Sequential(*layers)
 
+    def _event_features(self, x: torch.Tensor) -> torch.Tensor:
+        t = x[:, 0:1]
+        t_clear = x[:, 3:4]
+
+        fault_on = ((t >= self.t_fault) & (t < t_clear)).to(t.dtype)
+        post_fault = (t >= t_clear).to(t.dtype)
+
+        # Continuous age features improve representation away from the exact
+        # switching instants, which are excluded from physics collocation.
+        fault_age = torch.clamp((t - self.t_fault) / 0.20, min=0.0, max=1.0)
+        clear_age = torch.clamp((t - t_clear) / 0.75, min=0.0, max=1.0)
+        return torch.cat([fault_on, post_fault, fault_age, clear_age], dim=1)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         z = (x - self.centre) / self.scale
+        z = torch.cat([z, self._event_features(x)], dim=1)
         raw = self.network(z)
-        tau = x[:, 0:1] / self.t_end
-        delta = self.delta0 + tau * self.delta_output_scale * raw[:, 0:1]
-        omega = tau * self.omega_output_scale * raw[:, 1:2]
+
+        t = x[:, 0:1]
+        initial_gate = 1.0 - torch.exp(-t / self.initial_condition_tau_s)
+        delta = self.delta0 + initial_gate * self.delta_output_scale * raw[:, 0:1]
+        omega = initial_gate * self.omega_output_scale * raw[:, 1:2]
         return torch.cat([delta, omega], dim=1)
 
 
@@ -68,10 +87,18 @@ def physics_residuals(
     omega = output[:, 1:2]
 
     grad_delta = torch.autograd.grad(
-        delta, x, grad_outputs=torch.ones_like(delta), create_graph=True, retain_graph=True
+        delta,
+        x,
+        grad_outputs=torch.ones_like(delta),
+        create_graph=True,
+        retain_graph=True,
     )[0][:, 0:1]
     grad_omega = torch.autograd.grad(
-        omega, x, grad_outputs=torch.ones_like(omega), create_graph=True, retain_graph=True
+        omega,
+        x,
+        grad_outputs=torch.ones_like(omega),
+        create_graph=True,
+        retain_graph=True,
     )[0][:, 0:1]
 
     t = x[:, 0:1]
