@@ -31,3 +31,7 @@ The v0.3 unseen-location improvement cannot be marketed as safe unseen-location 
 - A basic executable reference-fallback adapter and digest-pinned checkpoint loader now exist, but live physics-residual computation, a dedicated CLI, and an end-to-end actual-ANDES benchmark remain outstanding.
 - ANDES convergence failures in reference sweeps must be surfaced, never silently classified as correct trajectories.
 - Next scientific milestone: new pre-registered trust-policy evaluation with broader fault topologies, temporal ranges, more seeds, and uncertainty estimates. Do not tune to the inspected v0.3 holdout.
+
+## Acceptance outcome (9 October 2026)
+
+The newly pre-registered duration-case gate has passed on the three unchanged pinned checkpoints: 76/84 accepted interpolation cases, zero observed false accepts, and 21/21 longer-duration cases escalated to ANDES. See [frozen result](results_andes_v1_fresh_duration.md) and [workflow](https://github.com/abhijith-sivaprasadan/GridGuardPINN/actions/runs/37925430499). This supports a scoped IEEE-14 research-demonstrator v1.0, not production safety. No published immutable GitHub release tag exists yet.
