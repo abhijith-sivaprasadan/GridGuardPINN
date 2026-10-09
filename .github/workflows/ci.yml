@@ -19,5 +19,9 @@ jobs:
           pip install -e ".[dev]"
       - name: Test
         run: pytest
+      - name: Smoke-test frozen reference sweep
+        run: |
+          python scripts/run_reference_sweep.py
+          test -s artifacts/reference_sweep.csv
       - name: Lint
         run: ruff check src tests scripts
