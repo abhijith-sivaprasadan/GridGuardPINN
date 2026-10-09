@@ -15,7 +15,7 @@ class MahalanobisOOD:
         self.mean_: np.ndarray | None = None
         self.inv_cov_: np.ndarray | None = None
 
-    def fit(self, x: np.ndarray) -> "MahalanobisOOD":
+    def fit(self, x: np.ndarray) -> MahalanobisOOD:
         x = np.asarray(x, dtype=float)
         if x.ndim != 2 or x.shape[0] < 2:
             raise ValueError("x must be a 2D array with at least two rows.")
