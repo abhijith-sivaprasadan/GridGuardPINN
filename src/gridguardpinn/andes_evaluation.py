@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import time
 
 import numpy as np
 import torch
@@ -42,12 +43,44 @@ def trajectory_metrics(
     }
 
 
+def _sync_if_cuda(x: torch.Tensor) -> None:
+    if x.device.type == "cuda":
+        torch.cuda.synchronize(x.device)
+
+
+def timed_prediction(
+    model,
+    x: torch.Tensor,
+    *,
+    repeats: int = 5,
+) -> tuple[np.ndarray, float]:
+    """Return prediction and median wall time after one warm-up forward pass."""
+    if repeats < 1:
+        raise ValueError("repeats must be at least 1.")
+
+    model.eval()
+    with torch.no_grad():
+        prediction = model(x)
+        _sync_if_cuda(x)
+
+        elapsed = []
+        for _ in range(repeats):
+            _sync_if_cuda(x)
+            started = time.perf_counter()
+            prediction = model(x)
+            _sync_if_cuda(x)
+            elapsed.append(time.perf_counter() - started)
+
+    return prediction.detach().cpu().numpy(), float(np.median(elapsed))
+
+
 def evaluate_case(
     model,
     trajectory,
     case,
     *,
     residual_samples: int = 151,
+    inference_repeats: int = 5,
 ):
     x_np = raw_input(
         trajectory.time_s,
@@ -55,9 +88,11 @@ def evaluate_case(
         case.fault_bus,
     )
     x = torch.tensor(x_np, dtype=torch.float32)
-    model.eval()
-    with torch.no_grad():
-        prediction = model(x).cpu().numpy()
+    prediction, inference_seconds = timed_prediction(
+        model,
+        x,
+        repeats=inference_repeats,
+    )
     metrics = trajectory_metrics(target_matrix(trajectory), prediction)
 
     clear = 1.0 + case.fault_duration_s
@@ -120,6 +155,8 @@ def evaluate_case(
             ),
             "fault_bus": case.fault_bus,
             "fault_duration_s": case.fault_duration_s,
+            "inference_seconds_trajectory": inference_seconds,
+            "inference_points": int(trajectory.time_s.size),
         }
     )
     return metrics
