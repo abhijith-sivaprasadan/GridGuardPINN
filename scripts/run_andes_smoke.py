@@ -8,22 +8,17 @@ from pathlib import Path
 
 import numpy as np
 
-from gridguardpinn.andes_reference import resample_trajectory, run_kundur_fault
+from gridguardpinn.andes_reference import resample_trajectory, run_ieee14_packaged_fault
 
 
 def main() -> None:
     output = Path("artifacts/andes_kundur_smoke")
     output.mkdir(parents=True, exist_ok=True)
 
-    trajectory = run_kundur_fault(
-        fault_bus=5,
-        fault_start_s=1.0,
-        fault_clear_s=1.1,
-        simulation_end_s=5.0,
-    )
+    trajectory = run_ieee14_packaged_fault(simulation_end_s=2.0)
     uniform = resample_trajectory(
         trajectory,
-        time_grid_s=np.linspace(0.0, 5.0, 501),
+        time_grid_s=np.linspace(0.0, 2.0, 401),
     )
 
     metrics = {
