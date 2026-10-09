@@ -24,4 +24,4 @@ jobs:
           python scripts/run_reference_sweep.py
           test -s artifacts/reference_sweep.csv
       - name: Lint
-        run: ruff check src tests scripts
+        run: ruff check --diff src tests scripts
