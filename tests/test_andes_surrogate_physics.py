@@ -60,14 +60,14 @@ def test_raw_input_fault_bus_is_one_hot():
 
 
 def test_exact_swing_solution_has_near_zero_residual():
-    inertia = torch.linspace(4.0, 8.0, N_GENERATORS)
-    damping = torch.linspace(0.5, 1.5, N_GENERATORS)
-    frequency = torch.full((N_GENERATORS,), 60.0)
+    inertia = torch.linspace(4.0, 8.0, N_GENERATORS, dtype=torch.float64)
+    damping = torch.linspace(0.5, 1.5, N_GENERATORS, dtype=torch.float64)
+    frequency = torch.full((N_GENERATORS,), 60.0, dtype=torch.float64)
     model = ExactSwingModel(inertia, damping, frequency)
 
     x = torch.tensor(
         raw_input(np.linspace(0.0, 2.0, 41), 0.08, 9),
-        dtype=torch.float32,
+        dtype=torch.float64,
         requires_grad=True,
     )
     r_delta, r_omega = swing_residuals(
@@ -77,8 +77,8 @@ def test_exact_swing_solution_has_near_zero_residual():
         damping_D=damping,
         frequency_hz=frequency,
     )
-    assert float(torch.max(torch.abs(r_delta))) < 2e-5
-    assert float(torch.max(torch.abs(r_omega))) < 2e-6
+    assert float(torch.max(torch.abs(r_delta)).detach()) < 1e-10
+    assert float(torch.max(torch.abs(r_omega)).detach()) < 1e-12
     assert float(
         swing_physics_loss(
             model,
@@ -86,14 +86,14 @@ def test_exact_swing_solution_has_near_zero_residual():
             inertia_M=inertia,
             damping_D=damping,
             frequency_hz=frequency,
-        )
-    ) < 1e-8
+        ).detach()
+    ) < 1e-18
 
 
 def test_torque_bias_is_detected_by_physics_residual():
-    inertia = torch.linspace(4.0, 8.0, N_GENERATORS)
-    damping = torch.linspace(0.5, 1.5, N_GENERATORS)
-    frequency = torch.full((N_GENERATORS,), 60.0)
+    inertia = torch.linspace(4.0, 8.0, N_GENERATORS, dtype=torch.float64)
+    damping = torch.linspace(0.5, 1.5, N_GENERATORS, dtype=torch.float64)
+    frequency = torch.full((N_GENERATORS,), 60.0, dtype=torch.float64)
     model = ExactSwingModel(
         inertia,
         damping,
@@ -103,7 +103,7 @@ def test_torque_bias_is_detected_by_physics_residual():
 
     x = torch.tensor(
         raw_input(np.linspace(0.0, 2.0, 41), 0.08, 9),
-        dtype=torch.float32,
+        dtype=torch.float64,
         requires_grad=True,
     )
     _, r_omega = swing_residuals(
