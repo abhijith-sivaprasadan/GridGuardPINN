@@ -1,10 +1,12 @@
-"""Run the frozen v0.2 parametric-PINN trust experiment."""
+"""Run a frozen GridGuardPINN trust experiment."""
 
 from __future__ import annotations
 
 import argparse
 import csv
 import json
+import math
+import os
 from dataclasses import asdict
 from pathlib import Path
 
@@ -14,7 +16,7 @@ from scipy.stats import spearmanr
 
 from gridguardpinn.calibration import baseline_reports, calibrate_gate
 from gridguardpinn.evaluation import evaluate_split
-from gridguardpinn.scenarios import canonical_splits, scenario_vector
+from gridguardpinn.scenarios import scenario_vector, splits_v02, splits_v03
 from gridguardpinn.training import TrainingConfig, train_parametric_pinn
 from gridguardpinn.trust import MahalanobisOOD
 
@@ -24,23 +26,52 @@ def residual_error_correlation(rows: list[dict[str, float | str | int]]) -> floa
         return float("nan")
     residual = [float(row["residual_score"]) for row in rows]
     error = [float(row["composite_error_ratio"]) for row in rows]
-    result = spearmanr(residual, error)
-    return float(result.statistic)
+    return float(spearmanr(residual, error).statistic)
+
+
+def error_summary(rows: list[dict[str, float | str | int]]) -> dict[str, float]:
+    def values(key: str) -> np.ndarray:
+        return np.asarray([float(row[key]) for row in rows], dtype=float)
+
+    composite = values("composite_error_ratio")
+    delta = values("delta_rmse_rad")
+    omega = values("omega_rmse_pu")
+    return {
+        "composite_mean": float(np.mean(composite)),
+        "composite_median": float(np.median(composite)),
+        "composite_max": float(np.max(composite)),
+        "delta_rmse_mean_rad": float(np.mean(delta)),
+        "delta_rmse_max_rad": float(np.max(delta)),
+        "omega_rmse_mean_pu": float(np.mean(omega)),
+        "omega_rmse_max_pu": float(np.max(omega)),
+        "good_cases": int(np.sum(composite <= 1.0)),
+    }
+
+
+def json_safe(value):
+    if isinstance(value, dict):
+        return {key: json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [json_safe(item) for item in value]
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    return value
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=500)
-    parser.add_argument("--anchors", type=int, default=61)
-    parser.add_argument("--collocation", type=int, default=48)
+    parser.add_argument("--protocol", choices=("v0.2", "v0.3"), default="v0.3")
+    parser.add_argument("--epochs", type=int, default=1200)
+    parser.add_argument("--anchors", type=int, default=81)
+    parser.add_argument("--collocation", type=int, default=64)
     parser.add_argument("--seed", type=int, default=7)
-    parser.add_argument("--output-dir", default="artifacts/experiment_v0_2")
+    parser.add_argument("--output-dir")
     args = parser.parse_args()
 
-    output = Path(args.output_dir)
+    output = Path(args.output_dir or f"artifacts/experiment_{args.protocol.replace('.', '_')}")
     output.mkdir(parents=True, exist_ok=True)
 
-    splits = canonical_splits()
+    splits = splits_v03() if args.protocol == "v0.3" else splits_v02()
     config = TrainingConfig(
         epochs=args.epochs,
         anchors_per_case=args.anchors,
@@ -78,6 +109,20 @@ def main() -> None:
         split_name: residual_error_correlation(rows)
         for split_name, rows in rows_by_split.items()
     }
+    errors = {
+        split_name: error_summary(rows)
+        for split_name, rows in rows_by_split.items()
+    }
+
+    ood_factor_reports: dict[str, dict[str, dict[str, float | int]]] = {}
+    factor_names = sorted(
+        {str(row["ood_factors"]) for row in rows_by_split["ood"]}
+    )
+    for factor in factor_names:
+        factor_rows = [
+            row for row in rows_by_split["ood"] if str(row["ood_factors"]) == factor
+        ]
+        ood_factor_reports[factor] = baseline_reports(factor_rows, gate)
 
     all_rows = [row for rows in rows_by_split.values() for row in rows]
     with (output / "case_metrics.csv").open("w", newline="", encoding="utf-8") as handle:
@@ -86,11 +131,15 @@ def main() -> None:
         writer.writerows(all_rows)
 
     summary = {
-        "protocol": "v0.2-frozen-before-parametric-results",
+        "protocol": args.protocol,
+        "git_sha": os.environ.get("GITHUB_SHA"),
         "split_sizes": {name: len(cases) for name, cases in splits.items()},
         "training": training.metadata(),
+        "final_training_state": training.history[-1],
         "gate": asdict(gate),
+        "error_summary": errors,
         "reports": reports,
+        "ood_factor_reports": ood_factor_reports,
         "residual_error_spearman": correlations,
         "provisional_good_case_definition": {
             "delta_rmse_rad_lte": gate.angle_tolerance_rad,
@@ -98,12 +147,13 @@ def main() -> None:
             "composite_error_ratio_lte": 1.0,
         },
     }
+    summary = json_safe(summary)
 
     (output / "summary.json").write_text(
-        json.dumps(summary, indent=2, allow_nan=True), encoding="utf-8"
+        json.dumps(summary, indent=2), encoding="utf-8"
     )
     (output / "training_history.json").write_text(
-        json.dumps(training.history, indent=2), encoding="utf-8"
+        json.dumps(json_safe(training.history), indent=2), encoding="utf-8"
     )
     torch.save(
         {
@@ -113,7 +163,7 @@ def main() -> None:
         output / "model.pt",
     )
 
-    print("EXPERIMENT_SUMMARY_JSON=" + json.dumps(summary, allow_nan=True))
+    print("EXPERIMENT_SUMMARY_JSON=" + json.dumps(summary))
 
 
 if __name__ == "__main__":
