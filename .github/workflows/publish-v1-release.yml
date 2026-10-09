@@ -2,6 +2,10 @@ name: Publish verified v1.0.0 research release
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "experiments/trigger_publish_v1.txt"
 
 permissions:
   contents: write
@@ -23,17 +27,24 @@ jobs:
           import os
           import subprocess
           import sys
+          import time
 
           repo = os.environ["GITHUB_REPOSITORY"]
           sha = os.environ["GITHUB_SHA"]
-          data = json.loads(subprocess.check_output(
-              ["gh", "api", f"repos/{repo}/actions/runs?head_sha={sha}&per_page=50"],
-              text=True,
-          ))
-          jobs = [r for r in data["workflow_runs"] if r["name"] == "CI"]
-          if not jobs or jobs[0]["status"] != "completed" or jobs[0]["conclusion"] != "success":
-              sys.exit("No successful completed CI workflow on release commit")
-          print("Verified successful CI", jobs[0]["html_url"])
+          for attempt in range(40):
+              data = json.loads(subprocess.check_output(
+                  ["gh", "api", f"repos/{repo}/actions/runs?head_sha={sha}&per_page=50"],
+                  text=True,
+              ))
+              jobs = [r for r in data["workflow_runs"] if r["name"] == "CI" and r["head_sha"] == sha]
+              if jobs and jobs[0]["status"] == "completed":
+                  if jobs[0]["conclusion"] != "success":
+                      sys.exit("Release commit has non-success CI")
+                  print("Verified successful CI", jobs[0]["html_url"])
+                  break
+              time.sleep(15)
+          else:
+              sys.exit("Release commit CI did not complete before timeout")
           PY
       - name: Download original archived evidence
         env:
@@ -46,11 +57,22 @@ jobs:
           gh api repos/abhijith-sivaprasadan/GridGuardPINN/actions/artifacts/11612834465/zip > release-assets/trained_runtime_audit.zip
           gh api repos/abhijith-sivaprasadan/GridGuardPINN/actions/artifacts/11620885900/zip > release-assets/randomized_paired_benchmark.zip
           (cd release-assets && sha256sum *.zip > SHA256SUMS.txt)
+      - name: Build archival environment manifest and paper figures
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,andes]"
+          pip install matplotlib
+          pip freeze > release-assets/resolved_environment.txt
+          python scripts/build_paper_figures.py
+          cp docs/figures/*.svg release-assets/
+          git rev-parse HEAD > release-assets/SOURCE_COMMIT.txt
+          (cd release-assets && sha256sum *.zip *.svg resolved_environment.txt SOURCE_COMMIT.txt > SHA256SUMS.txt)
       - name: Publish release with permanent evidence attachments
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v1.0.0 release-assets/*.zip release-assets/SHA256SUMS.txt --target "$GITHUB_SHA" --title "GridGuardPINN v1.0.0 — IEEE-14 research demonstrator" --notes-file RELEASE_NOTES_v1.0.0.md
+          gh release create v1.0.0 release-assets/*.zip release-assets/*.svg release-assets/SHA256SUMS.txt release-assets/resolved_environment.txt release-assets/SOURCE_COMMIT.txt --target "$GITHUB_SHA" --title "GridGuardPINN v1.0.0 — IEEE-14 research demonstrator" --notes-file RELEASE_NOTES_v1.0.0.md
       - name: Verify published tag and release assets
         env:
           GH_TOKEN: ${{ github.token }}
@@ -61,6 +83,6 @@ jobs:
           from pathlib import Path
           r=json.loads(Path("release-assets/published_release.json").read_text())
           assert r["tagName"] == "v1.0.0" and not r["isDraft"]
-          assert len(r["assets"]) >= 5
+          assert len(r["assets"]) >= 9
           print(r["url"])
           PY
