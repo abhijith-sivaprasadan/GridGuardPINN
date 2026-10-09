@@ -140,15 +140,20 @@ def train_andes_surrogate(
         model.train()
         optimizer.zero_grad(set_to_none=True)
         data_loss = _scaled_loss(model(x_train), y_train, output_scale)
-        physics_loss = swing_physics_loss(
-            model,
-            x_phys,
-            inertia_M=inertia,
-            damping_D=damping,
-            frequency_hz=frequency,
-        )
         weight = _physics_weight(epoch, config)
-        loss = data_loss + weight * physics_loss
+        if weight > 0.0:
+            physics_loss = swing_physics_loss(
+                model,
+                x_phys,
+                inertia_M=inertia,
+                damping_D=damping,
+                frequency_hz=frequency,
+            )
+            physics_loss_value = float(physics_loss.detach())
+            loss = data_loss + weight * physics_loss
+        else:
+            physics_loss_value = float("nan")
+            loss = data_loss
         loss.backward()
         optimizer.step()
         scheduler.step()
@@ -169,7 +174,7 @@ def train_andes_surrogate(
                     "epoch": float(epoch),
                     "total_loss": float(loss.detach()),
                     "data_loss": float(data_loss.detach()),
-                    "physics_loss": float(physics_loss.detach()),
+                    "physics_loss": physics_loss_value,
                     "physics_weight": float(weight),
                     "validation_scaled_mse": val_loss,
                     "learning_rate": float(optimizer.param_groups[0]["lr"]),
