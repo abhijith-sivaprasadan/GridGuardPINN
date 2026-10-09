@@ -16,7 +16,12 @@ from scipy.stats import spearmanr
 
 from gridguardpinn.calibration import baseline_reports, calibrate_gate
 from gridguardpinn.evaluation import evaluate_split
-from gridguardpinn.scenarios import scenario_vector, splits_v02, splits_v03, splits_v04
+from gridguardpinn.scenarios import (
+    scenario_vector,
+    splits_v02,
+    splits_v03,
+    splits_v04,
+)
 from gridguardpinn.training import TrainingConfig, train_parametric_pinn
 from gridguardpinn.trust import MahalanobisOOD
 
@@ -29,7 +34,7 @@ def residual_error_correlation(rows: list[dict[str, float | str | int]]) -> floa
     return float(spearmanr(residual, error).statistic)
 
 
-def error_summary(rows: list[dict[str, float | str | int]]) -> dict[str, float]:
+def error_summary(rows: list[dict[str, float | str | int]]) -> dict[str, float | int]:
     def values(key: str) -> np.ndarray:
         return np.asarray([float(row[key]) for row in rows], dtype=float)
 
@@ -58,9 +63,22 @@ def json_safe(value):
     return value
 
 
+def choose_splits(protocol: str):
+    factories = {
+        "v0.2": splits_v02,
+        "v0.3": splits_v03,
+        "v0.4": splits_v04,
+    }
+    return factories[protocol]()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--protocol", choices=("v0.2", "v0.3", "v0.4"), default="v0.4")
+    parser.add_argument(
+        "--protocol",
+        choices=("v0.2", "v0.3", "v0.4"),
+        default="v0.4",
+    )
     parser.add_argument("--epochs", type=int, default=2500)
     parser.add_argument("--anchors", type=int, default=121)
     parser.add_argument("--collocation", type=int, default=96)
@@ -68,17 +86,23 @@ def main() -> None:
     parser.add_argument("--output-dir")
     args = parser.parse_args()
 
-    output = Path(args.output_dir or f"artifacts/experiment_{args.protocol.replace('.', '_')}")
+    output = Path(
+        args.output_dir or f"artifacts/experiment_{args.protocol.replace('.', '_')}"
+    )
     output.mkdir(parents=True, exist_ok=True)
 
-    splits = {"v0.2": splits_v02, "v0.3": splits_v03, "v0.4": splits_v04}[args.protocol]()
+    splits = choose_splits(args.protocol)
     config = TrainingConfig(
         epochs=args.epochs,
         anchors_per_case=args.anchors,
         collocation_per_case=args.collocation,
         seed=args.seed,
     )
-    training = train_parametric_pinn(\n        splits["train"],\n        config=config,\n        validation_scenarios=splits["validation"] if args.protocol == "v0.4" else None,\n    )
+    training = train_parametric_pinn(
+        splits["train"],
+        config=config,
+        validation_scenarios=splits["validation"] if args.protocol == "v0.4" else None,
+    )
 
     train_vectors = np.vstack([scenario_vector(case) for case in splits["train"]])
     detector = MahalanobisOOD().fit(train_vectors)
@@ -115,9 +139,7 @@ def main() -> None:
     }
 
     ood_factor_reports: dict[str, dict[str, dict[str, float | int]]] = {}
-    factor_names = sorted(
-        {str(row["ood_factors"]) for row in rows_by_split["ood"]}
-    )
+    factor_names = sorted({str(row["ood_factors"]) for row in rows_by_split["ood"]})
     for factor in factor_names:
         factor_rows = [
             row for row in rows_by_split["ood"] if str(row["ood_factors"]) == factor
@@ -150,10 +172,12 @@ def main() -> None:
     summary = json_safe(summary)
 
     (output / "summary.json").write_text(
-        json.dumps(summary, indent=2), encoding="utf-8"
+        json.dumps(summary, indent=2),
+        encoding="utf-8",
     )
     (output / "training_history.json").write_text(
-        json.dumps(json_safe(training.history), indent=2), encoding="utf-8"
+        json.dumps(json_safe(training.history), indent=2),
+        encoding="utf-8",
     )
     torch.save(
         {
