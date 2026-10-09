@@ -6,8 +6,8 @@ deviation from synchronous speed and rotor angle is in electrical radians.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 import numpy as np
 
