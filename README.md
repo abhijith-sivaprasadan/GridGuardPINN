@@ -2,34 +2,98 @@
 
 **Trust-aware physics-informed neural-network surrogates for power-system dynamic simulation.**
 
-GridGuardPINN is a research-oriented project for studying a narrow question:
+GridGuardPINN studies a narrower question than “can a PINN imitate a dynamic simulator?”:
 
-> When is a fast PINN surrogate reliable enough to use, and when should a dynamic-simulation workflow fall back to a higher-fidelity reference solver?
+> **When is a fast PINN surrogate accurate enough to use, and when should the workflow deterministically fall back to the reference simulator?**
 
-The project starts with a classical single-machine infinite-bus (SMIB) swing-equation system and deliberately separates four layers:
+The project uses a classical single-machine infinite-bus (SMIB) swing-equation system as a controlled first testbed, with explicit train/calibration/held-out protocols, physics-informed learning, out-of-distribution (OOD) stress tests, and a trust gate evaluated as its own research object.
 
-1. **Reference dynamics** — reproducible numerical integration of the governing equations under fault/clearing disturbances.
-2. **PINN surrogate** — a physics-informed neural network trained to reproduce dynamic trajectories while satisfying the swing-equation residual.
-3. **Trust layer** — explicit physics-residual / out-of-distribution signals and a deterministic acceptance gate.
-4. **Fallback path** — rejected cases are escalated to the reference simulator rather than silently trusted.
+## Why this project exists
 
-An LLM orchestration layer is intentionally **not** part of v0.1. The trust decision must first be independently measurable and auditable.
+Average surrogate accuracy is not enough for safety-relevant engineering workflows. A useful surrogate needs both:
 
-## Current scope
+1. **accuracy** inside a stated operating envelope; and
+2. **a reliable refusal mechanism** when a case is outside that envelope or the surrogate is behaving poorly.
 
-v0.1 establishes the scientific contract and testable software skeleton:
+GridGuardPINN therefore separates:
 
-- SMIB swing-equation model with configurable inertia, damping, mechanical power, transfer limits, and fault/clearing times.
-- SciPy reference simulation with strict tolerances and reproducible scenario grids.
-- In-distribution and deliberately out-of-distribution scenario splits.
-- PyTorch PINN baseline and physics-residual calculation.
-- Deterministic trust-gate API.
-- Gate metrics including coverage, false accepts, false escalations, and accepted-case error.
-- Unit tests and CI.
+```text
+dynamic case
+    |
+    v
+PINN surrogate
+    |
+    +--> physics-residual signal
+    +--> parameter-space OOD signal
+    |
+    v
+deterministic trust gate
+    | accept                     | reject
+    v                            v
+surrogate trajectory       reference simulation
+```
+
+An LLM may eventually orchestrate this workflow, but it is deliberately **not** the safety gate.
+
+## Current evidence
+
+### v0.2 — uniform-sampling baseline
+
+The first parametric PINN was intentionally evaluated before tuning around held-out results.
+
+| Split | Cases | Mean composite error ratio | Good cases | Combined-gate coverage |
+|---|---:|---:|---:|---:|
+| Validation | 16 | 8.23 | 0 | 0% |
+| ID test | 16 | 8.20 | 0 | 0% |
+| OOD test | 16 | 941.31 | 0 | 0% |
+
+This was a useful negative result: the surrogate was too inaccurate for the trust gate to do anything except reject every case.
+
+See [v0.2 baseline result](docs/results_v0_2_baseline.md).
+
+### v0.3 — event-aware surrogate
+
+Before changing the model, a **fresh held-out set** was frozen. v0.3 then added event-aware supervised sampling, phase-stratified physics collocation, explicit fault/post-fault features, an improved hard initial-condition transform, and a data-first physics-loss curriculum.
+
+| Split | Cases | Good cases | Mean composite error ratio | Residual/error Spearman ρ |
+|---|---:|---:|---:|---:|
+| Validation | 16 | 2 | 1.97 | 0.921 |
+| Fresh ID test | 24 | 2 | 1.81 | 0.886 |
+| Fresh OOD test | 24 | 0 | 3.66 | 0.906 |
+
+On the **fresh ID test**, always accepting the surrogate produced 22 false accepts in 24 cases. The validation-calibrated combined gate accepted 1/24 cases with **zero false accepts**, but coverage was only **4.17%**.
+
+On the fresh OOD set, all 24 surrogate trajectories violated the provisional accuracy tolerance and the combined gate rejected all 24. Parameter-space OOD detection by itself was insufficient: it accepted 8/24 OOD cases, all of which were bad trajectories.
+
+The important v0.3 result is therefore not “the surrogate works.” It is:
+
+> **Event-aware training materially improved the surrogate, and PINN physics-residual magnitude became strongly associated with true trajectory error, but the surrogate was still not accurate enough for useful high-coverage routing.**
+
+See [v0.3 result](docs/results_v0_3.md).
+
+## Accuracy definition
+
+For the SMIB demonstrator, a trajectory is provisionally labelled acceptable only if both are satisfied:
+
+- rotor-angle RMSE ≤ **0.05 rad**;
+- speed-deviation RMSE ≤ **5×10⁻⁴ pu**.
+
+The composite error ratio is:
+
+```text
+max(
+    rotor-angle RMSE / 0.05 rad,
+    speed RMSE / 5e-4 pu
+)
+```
+
+A composite ratio ≤ 1 is “good” for this experiment.
+
+These are **transparent research-screening thresholds**, not industry protection, stability, or grid-code acceptance standards.
 
 ## Governing model
 
-For rotor-angle deviation `delta` and per-unit speed deviation `omega`:
+For rotor angle `delta` and per-unit speed deviation `omega`:
 
 ```text
 d(delta)/dt = omega_b * omega
@@ -39,60 +103,93 @@ d(omega)/dt = [Pm - Pe(delta, t) - D*omega] / (2H)
 Pe(delta, t) = Pmax(t) * sin(delta)
 ```
 
-`Pmax(t)` is piecewise-defined across pre-fault, fault-on, and post-fault intervals. The default initial rotor angle is the pre-fault equilibrium:
+`Pmax(t)` is piecewise-defined across pre-fault, fault-on, and post-fault intervals. The reference solver restarts exactly at event boundaries rather than stepping blindly across the discontinuity.
+
+The default initial state is the pre-fault equilibrium:
 
 ```text
 delta_0 = asin(Pm / Pmax_pre)
 omega_0 = 0
 ```
 
-This is a deliberately reduced-order educational/research model. It is **not** a planning-grade or protection-grade transient-stability tool.
+## Experimental discipline
 
-## Trust-gate concept
+The project treats data-split discipline as part of the engineering result.
 
-The intended decision path is:
+- Gate thresholds are calibrated on **validation only**.
+- Held-out ID/OOD cases do not set thresholds.
+- Once a held-out set has been inspected, it is never described as “blind” for a tuned successor model.
+- New model iterations freeze a **new held-out set before evaluation**.
+- Negative results are recorded rather than hidden by moving the acceptance threshold.
 
-```text
-dynamic case
-   |
-   v
-PINN surrogate
-   |
-   +--> physics-residual signal
-   +--> OOD signal
-   +--> optional uncertainty signal
-   |
-   v
-deterministic trust gate
-   | accepted                 | rejected
-   v                          v
-surrogate result       reference simulation
-```
+Protocols and results are versioned in `docs/`.
 
-The gate is evaluated as its own research object. In particular, a **false accept** — trusting a surrogate case whose true trajectory error exceeds the allowed tolerance — is treated as the most important failure mode.
+## Trust signals
+
+### Physics residual
+
+The PINN trajectory is differentiated with autograd and tested against the governing swing equations away from fault-switching discontinuities.
+
+Residual magnitude is **not treated as proof of correctness**. It is evaluated empirically against actual trajectory error from the reference solver.
+
+### Parameter-space OOD score
+
+A Mahalanobis-distance detector is fit only on training-scenario parameters:
+
+- inertia `H`;
+- damping `D`;
+- fault-clearing time;
+- fault-on transfer ratio.
+
+v0.3 shows why this cannot be the sole safety mechanism: parameter-space proximity does not guarantee trajectory accuracy.
+
+## Gate metrics
+
+The primary safety failure is a **false accept**:
+
+> the gate accepts a surrogate trajectory whose reference-solver error exceeds the frozen tolerance.
+
+Reported metrics include:
+
+- false accepts / all cases;
+- false accepts / accepted cases;
+- surrogate coverage;
+- false escalations;
+- accepted-case error;
+- residual/error association;
+- comparison against always-accept, OOD-only, and residual-only routing.
 
 ## Repository layout
 
 ```text
 src/gridguardpinn/
-  dynamics.py      # SMIB equations and scenario definition
-  reference.py     # high-accuracy numerical reference simulation
-  scenarios.py     # reproducible ID/OOD scenario generation
-  trust.py         # OOD model, deterministic gate, gate metrics
-  pinn.py          # PyTorch PINN model and physics residuals
+  dynamics.py       # SMIB equations and scenario definition
+  reference.py      # segmented high-accuracy numerical reference
+  scenarios.py      # versioned train/validation/ID/OOD protocols
+  dataset.py        # event-aware reference anchors + collocation points
+  pinn.py           # parametric event-aware PINN
+  training.py       # reproducible curriculum training
+  evaluation.py     # trajectory/residual/OOD evaluation
+  calibration.py    # validation-only trust-gate calibration
+  trust.py          # trust signals and gate metrics
 
 scripts/
   run_reference_sweep.py
-  train_baseline.py
+  run_experiment.py
 
-tests/
 docs/
   research_protocol.md
+  experiment_spec_v0_2.md
+  results_v0_2_baseline.md
+  experiment_spec_v0_3.md
+  results_v0_3.md
+  experiment_spec_v0_4.md
+
+tests/
+.github/workflows/
 ```
 
-## Quick start
-
-Core reference-solver functionality:
+## Reproduce the core solver
 
 ```bash
 python -m venv .venv
@@ -102,39 +199,48 @@ pytest
 python scripts/run_reference_sweep.py
 ```
 
-For the PINN components:
+## Run a PINN experiment
+
+Install CPU/GPU PyTorch as appropriate, then:
 
 ```bash
-pip install -e ".[dev,ml]"
-python scripts/train_baseline.py --epochs 2000
+pip install -e ".[dev]"
+python scripts/run_experiment.py --protocol v0.3 --epochs 1200 --anchors 81 --collocation 64 --seed 7
 ```
 
-The training script is a baseline, not a reported benchmark. Reproducible experiment results will be added only after the scenario protocol and trust metrics are frozen.
+The GitHub Actions experiment workflow records artifacts including:
 
-## Research roadmap
+- `summary.json`;
+- `case_metrics.csv`;
+- `training_history.json`;
+- model checkpoint.
 
-- **M0 — reference model:** equations, fault cases, tests, reproducible scenario splits.
-- **M1 — PINN baseline:** trajectory + physics-residual learning on in-distribution SMIB cases.
-- **M2 — trust gate:** calibrate residual/OOD thresholds on validation cases; report false accepts / false escalations on untouched test cases.
-- **M3 — stress testing:** inertia, damping, fault severity, clearing time, and unseen combinations.
-- **M4 — simulator upgrade:** connect the reference side to an open-source power-system dynamic simulator such as ANDES and repeat the trust experiment on a standard system.
-- **M5 — orchestration:** only after M2–M4, add a tool-calling orchestration layer whose role is workflow routing, not the safety decision itself.
+## Roadmap
+
+- **M0 — reference dynamics:** complete.
+- **M1 — parametric PINN baseline:** complete.
+- **M2 — deterministic trust gate:** implemented and evaluated.
+- **M3 — stress testing:** active; one-factor OOD mechanisms evaluated.
+- **M4 — surrogate-accuracy refinement:** active under frozen successive holdouts.
+- **M5 — simulator upgrade:** repeat the protocol using an open-source power-system transient-stability reference such as ANDES on a standard multi-machine case.
+- **M6 — orchestration:** only after the trust mechanism is useful, add a tool-calling orchestration layer whose job is workflow routing, not safety judgement.
 
 ## Scientific boundaries
 
-GridGuardPINN is currently a research demonstrator. It does not claim:
+GridGuardPINN currently does **not** claim:
 
-- operational or protection-grade validation;
-- equivalence to commercial tools such as PowerFactory, PSCAD, EMTP, PSS/E, or TSAT;
+- operational, planning-grade, or protection-grade validation;
+- equivalence to PowerFactory, PSCAD, EMTP, PSS/E, TSAT, or another commercial tool;
+- that SMIB findings automatically transfer to multi-machine systems;
 - that physics residual alone proves predictive correctness;
-- that a deterministic gate developed on SMIB cases transfers automatically to multi-machine grids;
+- that the current deterministic gate provides useful production-level coverage;
 - that an LLM should decide whether a surrogate is safe.
 
-Those are precisely the boundaries the project is intended to investigate.
+The reduced-order SMIB phase is a method-development testbed. The planned simulator upgrade is required before making broader power-system claims.
 
 ## Implementation note
 
-AI-assisted implementation is used in this repository. The project owner defines the research question, model formulation, assumptions, verification criteria, experiment design, and interpretation of results, and remains responsible for validating the implementation.
+AI-assisted implementation is used in this repository. The project owner defines the research question, governing model, assumptions, experimental protocol, validation criteria, architecture decisions, and interpretation of results, and remains responsible for verifying the implementation.
 
 ## License
 
