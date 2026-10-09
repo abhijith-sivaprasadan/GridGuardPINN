@@ -1,0 +1,66 @@
+name: Publish verified v1.0.0 research release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require validated core and integrated CI for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          sha = os.environ["GITHUB_SHA"]
+          data = json.loads(subprocess.check_output(
+              ["gh", "api", f"repos/{repo}/actions/runs?head_sha={sha}&per_page=50"],
+              text=True,
+          ))
+          jobs = [r for r in data["workflow_runs"] if r["name"] == "CI"]
+          if not jobs or jobs[0]["status"] != "completed" or jobs[0]["conclusion"] != "success":
+              sys.exit("No successful completed CI workflow on release commit")
+          print("Verified successful CI", jobs[0]["html_url"])
+          PY
+      - name: Download original archived evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p release-assets
+          gh api repos/abhijith-sivaprasadan/GridGuardPINN/actions/artifacts/11612523064/zip > release-assets/frozen_v03_models.zip
+          echo "02a82e4d53544203376749e7054778b9b93a2a5d6af3c83ab7d2820fd24f6666  release-assets/frozen_v03_models.zip" | sha256sum --check
+          gh api repos/abhijith-sivaprasadan/GridGuardPINN/actions/artifacts/11613913010/zip > release-assets/fresh_duration_validation.zip
+          gh api repos/abhijith-sivaprasadan/GridGuardPINN/actions/artifacts/11612834465/zip > release-assets/trained_runtime_audit.zip
+          gh api repos/abhijith-sivaprasadan/GridGuardPINN/actions/artifacts/11620885900/zip > release-assets/randomized_paired_benchmark.zip
+          (cd release-assets && sha256sum *.zip > SHA256SUMS.txt)
+      - name: Publish release with permanent evidence attachments
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1.0.0 release-assets/*.zip release-assets/SHA256SUMS.txt --target "$GITHUB_SHA" --title "GridGuardPINN v1.0.0 — IEEE-14 research demonstrator" --notes-file RELEASE_NOTES_v1.0.0.md --verify-tag=false
+      - name: Verify published tag and release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v1.0.0 --json tagName,isDraft,assets,url > release-assets/published_release.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("release-assets/published_release.json").read_text())
+          assert r["tagName"] == "v1.0.0" and not r["isDraft"]
+          assert len(r["assets"]) >= 5
+          print(r["url"])
+          PY
