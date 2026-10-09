@@ -4,6 +4,7 @@ from gridguardpinn.scenarios import (
     canonical_splits,
     scenario_vector,
     splits_v03,
+    splits_v04,
 )
 from gridguardpinn.trust import MahalanobisOOD
 
