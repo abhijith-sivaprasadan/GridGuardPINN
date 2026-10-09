@@ -13,15 +13,34 @@ N_BUSES = 14
 OUTPUT_DIM = 4 * N_GENERATORS
 
 
-def raw_input(t: np.ndarray, fault_duration_s: float, fault_bus: int) -> np.ndarray:
-    """Return [time, duration, 14-way one-hot bus] rows."""
+def raw_input(
+    t: np.ndarray,
+    fault_duration_s: float,
+    fault_bus: int,
+    *,
+    fault_descriptor: np.ndarray | None = None,
+) -> np.ndarray:
+    """Return [time, duration, 14-D fault-location representation] rows."""
     t = np.asarray(t, dtype=float).reshape(-1)
     if not 1 <= fault_bus <= N_BUSES:
         raise ValueError("fault_bus must be in [1, 14].")
+
+    if fault_descriptor is None:
+        location = np.zeros(N_BUSES, dtype=float)
+        location[fault_bus - 1] = 1.0
+    else:
+        location = np.asarray(fault_descriptor, dtype=float).reshape(-1)
+        if location.shape != (N_BUSES,):
+            raise ValueError(
+                f"fault_descriptor must contain exactly {N_BUSES} values."
+            )
+        if not np.all(np.isfinite(location)):
+            raise ValueError("fault_descriptor must contain finite values.")
+
     x = np.zeros((t.size, 2 + N_BUSES), dtype=float)
     x[:, 0] = t
     x[:, 1] = fault_duration_s
-    x[:, 1 + fault_bus] = 1.0
+    x[:, 2:] = location
     return x
 
 
