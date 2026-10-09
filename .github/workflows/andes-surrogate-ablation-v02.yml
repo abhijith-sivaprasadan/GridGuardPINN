@@ -18,7 +18,7 @@ on:
 
 concurrency:
   group: andes-multimachine-ablation-v0-2
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   ablation:
