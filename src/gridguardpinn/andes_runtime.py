@@ -104,8 +104,8 @@ def run_routed_case(
         or len(grid) < 2
         or not np.all(np.isfinite(grid))
         or np.any(np.diff(grid) <= 0)
-        or grid[0] < 0
-        or grid[-1] > 2.0
+        or not np.isclose(grid[0], 0.0, atol=1e-10)
+        or not np.isclose(grid[-1], 2.0, atol=1e-10)
     ):
         raise ValueError("A finite ascending time grid in [0, 2] is required.")
     decision = route_andes_case(
