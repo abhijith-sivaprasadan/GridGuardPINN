@@ -7,6 +7,7 @@ on:
       - "src/gridguardpinn/andes_runtime.py"
       - "src/gridguardpinn/andes_router.py"
       - "scripts/run_andes_runtime_smoke.py"
+      - "scripts/run_andes_runtime.py"
       - ".github/workflows/andes-runtime-smoke.yml"
   workflow_dispatch:
 
@@ -31,9 +32,16 @@ jobs:
           pip install -e ".[dev,andes]"
       - name: Run actual IEEE-14 reference and runtime integration smoke
         run: python scripts/run_andes_runtime_smoke.py
+      - name: Check canonical ANDES CLI provenance and fallback
+        run: |
+          sha=$(sha256sum artifacts/andes_runtime_smoke/smoke_model.pt | cut -d' ' -f1)
+          python scripts/run_andes_runtime.py --checkpoint artifacts/andes_runtime_smoke/smoke_model.pt --sha256 "$sha" --protocol runtime-smoke --bus 3 --duration 0.08 --output-dir artifacts/andes_runtime_cli_smoke
+          python -c "import json; from pathlib import Path; d=json.loads(Path('artifacts/andes_runtime_cli_smoke/routing.json').read_text()); assert len(d['case_sha256']) == 64; assert len(d['ordered_generator_buses']) == 5; assert d['source'] == 'reference'"
       - name: Preserve smoke evidence
         uses: actions/upload-artifact@v4
         with:
           name: gridguardpinn-andes-runtime-smoke
-          path: artifacts/andes_runtime_smoke/
+          path: |
+            artifacts/andes_runtime_smoke/
+            artifacts/andes_runtime_cli_smoke/
           retention-days: 30
