@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gridguardpinn"
-version = "0.1.0"
+version = "0.2.0"
 description = "Trust-aware PINN surrogates for power-system dynamic simulation"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,6 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 ml = ["torch>=2.2"]
+andes = ["andes==2.0.0; python_version >= '3.11'"]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 
 [tool.setuptools.packages.find]
