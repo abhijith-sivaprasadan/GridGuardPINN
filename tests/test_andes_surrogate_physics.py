@@ -59,6 +59,18 @@ def test_raw_input_fault_bus_is_one_hot():
     assert np.allclose(x[:, 1 + 9], 1.0)
 
 
+def test_raw_input_accepts_same_size_physical_descriptor():
+    descriptor = np.linspace(0.0, 1.0, N_BUSES)
+    x = raw_input(
+        np.asarray([0.0, 1.0]),
+        0.08,
+        9,
+        fault_descriptor=descriptor,
+    )
+    assert x.shape == (2, 2 + N_BUSES)
+    assert np.allclose(x[:, 2:], descriptor[None, :])
+
+
 def test_exact_swing_solution_has_near_zero_residual():
     inertia = torch.linspace(4.0, 8.0, N_GENERATORS, dtype=torch.float64)
     damping = torch.linspace(0.5, 1.5, N_GENERATORS, dtype=torch.float64)
