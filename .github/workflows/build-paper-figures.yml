@@ -1,0 +1,34 @@
+name: Build source-grounded paper figures
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "experiments/trigger_paper_figures.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  figures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build vector figures
+        run: |
+          pip install matplotlib numpy
+          python scripts/build_paper_figures.py
+          test -s docs/figures/paired_speedup_v1.svg
+          test -s docs/figures/physics_ablation_v1.svg
+      - name: Commit reproducible SVGs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/figures/paired_speedup_v1.svg docs/figures/physics_ablation_v1.svg
+          git commit -m "figures: publish generated vector research figures"
+          git push
