@@ -28,20 +28,41 @@ def _segment_pmax(scenario: SMIBScenario, start: float, end: float) -> float:
     return float(scenario.pmax_at(midpoint))
 
 
+def _time_grid(
+    scenario: SMIBScenario,
+    *,
+    samples: int,
+    times: np.ndarray | None,
+) -> np.ndarray:
+    if times is None:
+        if samples < 3:
+            raise ValueError("samples must be at least 3.")
+        return np.linspace(0.0, scenario.t_end, samples)
+
+    grid = np.asarray(times, dtype=float).reshape(-1)
+    if grid.size < 2:
+        raise ValueError("times must contain at least two entries.")
+    if np.any(~np.isfinite(grid)):
+        raise ValueError("times must be finite.")
+    if np.any(np.diff(grid) < 0):
+        raise ValueError("times must be sorted in non-decreasing order.")
+    if grid[0] < 0.0 or grid[-1] > scenario.t_end:
+        raise ValueError("times must lie within [0, scenario.t_end].")
+    return grid
+
+
 def simulate_reference(
     scenario: SMIBScenario,
     *,
     samples: int = 1001,
+    times: np.ndarray | None = None,
     rtol: float = 1e-9,
     atol: float = 1e-11,
     max_step: float | None = None,
 ) -> SimulationResult:
-    """Integrate each piecewise-smooth interval separately."""
-    if samples < 3:
-        raise ValueError("samples must be at least 3.")
-
-    times = np.linspace(0.0, scenario.t_end, samples)
-    states = np.empty((samples, 2), dtype=float)
+    """Integrate each smooth interval separately and sample requested times."""
+    sample_times = _time_grid(scenario, samples=samples, times=times)
+    states = np.empty((sample_times.size, 2), dtype=float)
     y0 = scenario.initial_state.copy()
 
     boundaries = [0.0, scenario.t_fault, scenario.t_clear, scenario.t_end]
@@ -70,12 +91,12 @@ def simulate_reference(
             raise RuntimeError(f"Reference integration failed: {solution.message}")
 
         if index == 0:
-            mask = (times >= start) & (times <= end)
+            mask = (sample_times >= start) & (sample_times <= end)
         else:
-            mask = (times > start) & (times <= end)
+            mask = (sample_times > start) & (sample_times <= end)
 
         if np.any(mask):
-            states[mask] = solution.sol(times[mask]).T
+            states[mask] = solution.sol(sample_times[mask]).T
 
         y0 = solution.y[:, -1]
 
@@ -83,7 +104,7 @@ def simulate_reference(
         raise RuntimeError("Reference integration produced non-finite states.")
 
     return SimulationResult(
-        t=times,
+        t=sample_times,
         delta=states[:, 0],
         omega=states[:, 1],
         scenario=scenario,
