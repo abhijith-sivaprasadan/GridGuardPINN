@@ -11,11 +11,11 @@ import time
 from pathlib import Path
 
 import numpy as np
+from run_andes_trained_runtime_audit import TRAINED_SHA256
 
 from gridguardpinn.andes_reference import resample_trajectory, run_ieee14_fault
 from gridguardpinn.andes_runtime import load_checkpoint, run_model_case
 from gridguardpinn.andes_surrogate_protocol import ROBUST_BUSES
-from run_andes_trained_runtime_audit import TRAINED_SHA256
 
 INTERPOLATION_DURATIONS = (0.05, 0.07, 0.09, 0.11)
 STRESS_DURATIONS = (0.13,)
@@ -78,7 +78,7 @@ def main():
                             constants.values(), vectors, strict=True)):
                         raise RuntimeError("Reference case machine constants changed.")
                 references[(bus, duration)] = (truth, time.perf_counter() - started)
-            except Exception as exc:  # Preserve simulator failures explicitly.
+            except Exception as exc:  # noqa: BLE001 - record all ANDES failures
                 issues.append({"split": split, "bus": bus, "duration_s": duration,
                                "error_type": type(exc).__name__, "message": str(exc)})
     if constants is None:
@@ -119,7 +119,7 @@ def main():
                         "false_escalation": int(result.source == "reference" and split == "fresh_interpolation"),
                         "reference_seconds": reference_seconds, "routed_seconds": routed_seconds,
                     })
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - record runtime failures
                     issues.append({"split": split, "seed": seed, "bus": bus,
                                    "duration_s": duration,
                                    "error_type": type(exc).__name__, "message": str(exc)})
