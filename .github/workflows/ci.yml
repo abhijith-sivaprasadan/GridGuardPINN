@@ -25,3 +25,20 @@ jobs:
           test -s artifacts/reference_sweep.csv
       - name: Lint
         run: ruff check src tests scripts
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install and test ML/ANDES
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,andes]"
+          pytest
+          python scripts/run_andes_runtime_smoke.py
