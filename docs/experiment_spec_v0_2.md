@@ -30,7 +30,7 @@ black-box regressor.
 
 - Train: 24 factorial cases inside the nominal parameter box.
 - Validation: 16 unseen interpolating cases, used for gate calibration.
-- ID test: 32 unseen interpolating combinations; never used for calibration.
+- ID test: 16 unseen interpolating combinations; never used for calibration.
 - OOD test: 16 cases with one or more parameters outside the train box; never
   used for calibration.
 
