@@ -178,7 +178,10 @@ def main() -> None:
         "protocol": "andes-surrogate-ablation-v0.2",
         "seeds": args.seeds,
         "arms": ARMS,
-        "reference_generation_seconds": reference_batch.total_seconds,
+        "reference_generation": {
+            "andes_solve_total_seconds": reference_batch.total_seconds,
+            "pipeline_total_seconds": reference_batch.pipeline_seconds,
+        },
         "aggregate": _aggregate_summaries(flat_rows),
         "per_seed": summaries,
     }
