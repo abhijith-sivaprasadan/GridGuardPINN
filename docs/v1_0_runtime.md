@@ -9,7 +9,7 @@ This is an IEEE-14/ANDES surrogate-routing research application, **not an operat
 - `run_model_case` computes the residual, applies the conservative bus/duration/residual policy, and runs `run_ieee14_fault` if routing rejects the learned model.
 - `scripts/run_andes_runtime.py` provides a CLI that writes `routing.json` and `electromechanical.csv` with the source of each result.
 
-**Important:** Only **one-hot** checkpoints are currently accepted by the runtime. The experimental network-aware v0.3 checkpoint must not be loaded into the one-hot feature encoder; the loader rejects that configuration. Machine constants must be supplied from a trusted IEEE-14 source and ordered according to ANDES's five GENROU machines. A SHA-256 computed from a downloaded untrusted checkpoint and accepted without independent verification does *not* establish provenance.
+**Important:** Only **one-hot** checkpoints are currently accepted by the runtime. The experimental network-aware v0.3 checkpoint must not be loaded into the one-hot feature encoder; the loader rejects that configuration. The CLI derives machine constants from the installed ANDES IEEE-14 case, records the case SHA-256 and ordered GENROU bus IDs, and does not accept free-form physics constants. This still needs a source-matched model-training case fingerprint for complete provenance. A SHA-256 computed from a downloaded untrusted checkpoint and accepted without independent verification does *not* establish provenance.
 
 ## CLI invocation template
 
@@ -27,13 +27,10 @@ python scripts/run_andes_runtime.py \
   --checkpoint PATH_TO_MODEL_PT \
   --sha256 TRUSTED_64_CHARACTER_SHA256 \
   --protocol EXPECTED_EXPERIMENT_PROTOCOL \
-  --bus 3 --duration 0.08 \
-  --inertia M1 M2 M3 M4 M5 \
-  --damping D1 D2 D3 D4 D5 \
-  --frequency F1 F2 F3 F4 F5
+  --bus 3 --duration 0.08
 ```
 
-Do not substitute arbitrary machine constants or fabricated residual scores. Values above are explicit placeholders, not runnable numeric defaults.
+Do not substitute an unverified checkpoint digest. Only the checkpoint/protocol parameters above are placeholders; canonical IEEE-14 machine constants are read automatically.
 
 ## Verified integration and limitations
 
@@ -47,5 +44,5 @@ Reference failures raise errors; the runtime does not replace failed reference c
 
 - Demonstrate routing with a **frozen trained checkpoint** and independently documented SHA-256.
 - Run an actual-ANDES benchmark with a source-labelled per-case decision ledger, error comparison and clear acceptance criteria on an untouched evaluation set.
-- Extend provenance to machine constants and exact network/case fingerprint.
+- Bind the training checkpoint to an exact model-training case fingerprint and ordered generator/feature metadata, then enforce matching at inference. The CLI already records the current installed case digest.
 - Publish an immutable release tag and complete reproducibility instructions after all acceptance gates pass.
