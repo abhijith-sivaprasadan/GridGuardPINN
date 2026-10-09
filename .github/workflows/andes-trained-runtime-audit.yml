@@ -1,0 +1,50 @@
+name: ANDES trained checkpoint runtime audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "experiments/trigger_trained_runtime_audit.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: andes-trained-runtime-audit
+  cancel-in-progress: true
+
+jobs:
+  trained-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install reference and surrogate dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,andes]"
+      - name: Download and verify original GitHub Actions artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/abhijith-sivaprasadan/GridGuardPINN/actions/artifacts/11612523064/zip > /tmp/andes_frozen_models.zip
+          echo "02a82e4d53544203376749e7054778b9b93a2a5d6af3c83ab7d2820fd24f6666  /tmp/andes_frozen_models.zip" | sha256sum --check
+          mkdir -p /tmp/andes_frozen_models
+          unzip -q /tmp/andes_frozen_models.zip -d /tmp/andes_frozen_models
+      - name: Run frozen trained-checkpoint routing audit with actual ANDES
+        run: |
+          python scripts/run_andes_trained_runtime_audit.py --artifact-dir /tmp/andes_frozen_models
+      - name: Preserve per-case routing decisions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridguardpinn-trained-runtime-audit
+          path: artifacts/andes_trained_runtime/
+          retention-days: 90
