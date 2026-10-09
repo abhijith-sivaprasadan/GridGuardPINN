@@ -251,13 +251,13 @@ def run_model_case(
         return run_routed_case(
             fault_bus=fault_bus,
             fault_duration_s=fault_duration_s,
-            residual_score=float("inf"),
+            residual_score=0.0,
             residual_threshold=residual_threshold,
             predict=lambda *args: (_ for _ in ()).throw(
                 RuntimeError("Refused case must not invoke surrogate")
             ),
             reference=reference,
-            model_ready=False,
+            model_ready=model is not None,
         )
     try:
         residual = compute_model_residual(
