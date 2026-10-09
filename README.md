@@ -8,7 +8,11 @@ GridGuardPINN studies a narrower question than “can a PINN imitate a dynamic s
 
 The project uses a classical single-machine infinite-bus (SMIB) swing-equation system as a controlled first testbed, with explicit train/calibration/held-out protocols, physics-informed learning, out-of-distribution (OOD) stress tests, and a trust gate evaluated as its own research object.
 
-> **v1.0 research demonstrator (October 2026):** This repository provides reproducible surrogate experiments and a fail-closed ANDES case-routing policy, **not** a certified safe grid-control application. See [v1.0 release scope](docs/v1_0_release_scope.md), [frozen v0.3 location-encoding results](docs/results_andes_location_encoding_v0_3.md), and [conservative router](src/gridguardpinn/andes_router.py). The network-aware model improves unseen-location error in 2/3 seeds but **residual-only gating falsely accepts inaccurate unseen-location predictions**, so the v1.0 default rejects all unseen fault buses.\n\n## Why this project exists
+> **v1.0 research demonstrator (October 2026):** This repository provides reproducible surrogate experiments and a fail-closed ANDES case-routing policy, **not** a certified safe grid-control application. See [v1.0 release scope](docs/v1_0_release_scope.md), [frozen v0.3 location-encoding results](docs/results_andes_location_encoding_v0_3.md), and [conservative router](src/gridguardpinn/andes_router.py). The network-aware model improves unseen-location error in 2/3 seeds but **residual-only gating falsely accepts inaccurate unseen-location predictions**, so the v1.0 default rejects all unseen fault buses.\n\n## Trained-model runtime audit (October 2026)
+
+A [pinned-checkpoint, real-ANDES routing audit](docs/results_andes_trained_runtime_v1_candidate.md) has now passed CI using the three **original one-hot seed-17/29/41 checkpoints**. Of 105 retrospectively evaluated seed-case combinations, the strict route returned 13 surrogate trajectories, escalated 92 cases to ANDES, and observed zero inaccurate surrogate acceptances. All unseen locations and duration-OOD cases escalated to the independent simulator. **These are previously inspected cases, not a new blind test and not evidence of operational safety.** The [workflow and downloadable ledger](https://github.com/abhijith-sivaprasadan/GridGuardPINN/actions/runs/37924679301) allow inspection of every decision.
+
+## Why this project exists
 
 Average surrogate accuracy is not enough for safety-relevant engineering workflows. A useful surrogate needs both:
 
