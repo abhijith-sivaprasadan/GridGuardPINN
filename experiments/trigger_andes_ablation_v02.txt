@@ -1,0 +1,13 @@
+GridGuardPINN ANDES multi-machine physics ablation v0.2
+
+Triggered after recording the untouched v0.1 surrogate result from commit
+8cf0b3e56cd476a65a05640afbe653b0d752ccbe.
+
+Frozen comparison:
+- data-only physics weight: 0.0
+- physics-informed weight: 0.02
+- seeds: 17, 29, 41
+- protocol: docs/andes_surrogate_ablation_plan_v0_2.md
+
+This trigger exists only to launch the pre-registered workflow without making
+the ablation run on ordinary source-code pushes.
