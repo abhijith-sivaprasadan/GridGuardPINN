@@ -59,7 +59,7 @@ def load_checkpoint(
     summary = checkpoint["summary"]
     if summary["protocol"] != expected_protocol:
         raise ValueError("Checkpoint protocol does not match the pinned protocol.")
-    encoding = summary.get("experiment_metadata", {}).get("location_encoding", "one_hot")
+    encoding = summary.get("experiment_metadata", {}).get("location_encoding")
     if encoding != "one_hot":
         raise ValueError("Only one-hot checkpoints supported by this runtime.")
     state = checkpoint["state_dict"]
