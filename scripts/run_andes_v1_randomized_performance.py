@@ -120,7 +120,7 @@ def main():
                 split, bus, duration = cases[int(index)]
                 first = "reference" if int(rng.integers(0, 2)) == 0 else "routed"
                 try:
-                    def execute_reference():
+                    def execute_reference(bus=bus, duration=duration, constants=constants):
                         began = time.perf_counter()
                         native = reference_fn(bus, duration)
                         seconds = time.perf_counter() - began
@@ -134,7 +134,7 @@ def main():
                             raise RuntimeError("Reference constants changed")
                         return channels(sampled), seconds
 
-                    def execute_route():
+                    def execute_route(bus=bus, duration=duration, model=model, threshold=threshold, constants=constants):
                         began = time.perf_counter()
                         answer = run_model_case(
                             model=model, fault_bus=bus, fault_duration_s=duration,
