@@ -1,0 +1,45 @@
+name: ANDES v1 randomized paired performance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "experiments/trigger_v1_randomized_performance.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install pinned simulator and neural dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,andes]"
+      - name: Verify frozen model source digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/abhijith-sivaprasadan/GridGuardPINN/actions/artifacts/11612523064/zip > /tmp/models.zip
+          echo "02a82e4d53544203376749e7054778b9b93a2a5d6af3c83ab7d2820fd24f6666  /tmp/models.zip" | sha256sum --check
+          mkdir -p /tmp/models
+          unzip -q /tmp/models.zip -d /tmp/models
+      - name: Run three paired randomized measurement rounds
+        run: python scripts/run_andes_v1_randomized_performance.py --artifact-dir /tmp/models
+      - name: Preserve full ledger even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridguardpinn-v1-randomized-performance
+          path: artifacts/andes_v1_randomized_performance/
+          retention-days: 90
