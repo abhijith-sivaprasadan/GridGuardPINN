@@ -201,14 +201,16 @@ src/gridguardpinn/
   andes_surrogate.py # multi-machine swing-equation-informed neural surrogate
   andes_multimachine.py # reference-data assembly for ANDES experiments
   andes_training.py  # multi-machine training loop
-  andes_evaluation.py # trajectory/residual evaluation
+  andes_evaluation.py # trajectory/residual evaluation + inference timing
   andes_gate.py      # validation-only multi-machine gate calibration
+  andes_experiment.py # reusable experiment/artifact engine
 
 scripts/
   run_reference_sweep.py
   run_experiment.py
   run_andes_sweep_v02.py
   run_andes_surrogate_experiment.py
+  run_andes_ablation.py
 
 docs/
   research_protocol.md
@@ -265,6 +267,29 @@ mechanical torque, and electrical torque. Its physics loss enforces the shared
 ANDES GENBase electromechanical equations. It is therefore described as a
 **swing-equation-informed GENROU surrogate**, not as a full GENROU-DAE PINN.
 
+
+## Run the pre-registered multi-machine physics ablation
+
+The v0.2 ablation keeps the architecture, frozen case split, optimiser schedule,
+output scaling, and validation checkpointing rule fixed. The only planned
+training difference is the swing-equation physics-loss weight:
+
+- data-only: `physics_weight = 0`;
+- physics-informed: `physics_weight = 0.02`.
+
+The default command runs the three frozen seeds (17, 29, 41) while generating
+the 63-case ANDES reference batch only once:
+
+```bash
+python scripts/run_andes_ablation.py --epochs 1000 --anchors 101 --collocation 56
+```
+
+Each arm/seed writes its own model, case metrics, training history, and summary.
+The top-level artifact directory additionally writes `seed_comparison.csv` and
+`aggregate.json` with median/range results across seeds. Evaluation now records
+per-case 401-point surrogate inference time and the wall-clock cost of the
+corresponding ANDES reference simulation.
+
 ## Multi-machine reference milestone
 
 The reduced-order SMIB phase is now complemented by a CI-verified **ANDES 2.0.0 IEEE-14 transient-stability reference path**.
@@ -280,8 +305,8 @@ See [ANDES reference result](docs/results_andes_reference_v0_1.md), [18-case swe
 - **M2 — deterministic trust gate:** implemented and evaluated.
 - **M3 — SMIB stress testing:** complete enough for method development; v0.4 preserved as regression evidence.
 - **M4 — ANDES multi-machine reference:** active; IEEE-14 dynamic faults and explicit simulator-failure handling are CI verified.
-- **M5 — multi-machine surrogate:** next; freeze train/validation/test protocols only after the expanded reference-feasibility sweep is complete.
-- **M6 — multi-machine trust layer:** evaluate physics/uncertainty/OOD signals and deterministic fallback on held-out ANDES cases.
+- **M5 — multi-machine surrogate:** active; the frozen v0.1 20-output GENROU surrogate is implemented and evaluated through the reusable experiment engine.
+- **M6 — multi-machine trust layer:** active; validation-only residual calibration, explicit location/duration OOD flags, timing metrics, and the pre-registered data-only vs physics-informed ablation are implemented.
 - **M7 — orchestration:** only after the trust mechanism is useful, add a tool-calling orchestration layer whose job is workflow routing, not safety judgement.
 
 ## Scientific boundaries
