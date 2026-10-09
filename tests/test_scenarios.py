@@ -1,0 +1,18 @@
+import numpy as np
+
+from gridguardpinn.scenarios import canonical_splits, scenario_vector
+from gridguardpinn.trust import MahalanobisOOD
+
+
+def test_canonical_split_sizes_and_ood_distance():
+    splits = canonical_splits()
+    assert len(splits["train"]) == 24
+    assert len(splits["validation"]) == 4
+    assert len(splits["ood"]) == 8
+
+    train_x = np.vstack([scenario_vector(case) for case in splits["train"]])
+    validation_x = np.vstack([scenario_vector(case) for case in splits["validation"]])
+    ood_x = np.vstack([scenario_vector(case) for case in splits["ood"]])
+
+    detector = MahalanobisOOD().fit(train_x)
+    assert np.median(detector.score(ood_x)) > np.median(detector.score(validation_x))
