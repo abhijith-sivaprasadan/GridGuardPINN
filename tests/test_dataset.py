@@ -6,15 +6,15 @@ from gridguardpinn.scenarios import canonical_splits
 
 def test_dataset_shapes_and_event_exclusion():
     scenarios = canonical_splits()["train"][:2]
-    data = build_supervised_dataset(scenarios, samples_per_case=11)
-    assert data.x.shape == (22, 5)
-    assert data.y.shape == (22, 2)
+    data = build_supervised_dataset(scenarios, samples_per_case=15)
+    assert data.x.shape == (30, 5)
+    assert data.y.shape == (30, 2)
     assert np.all(np.isfinite(data.y))
 
     points = build_collocation_points(
-        scenarios, points_per_case=10, event_exclusion_s=0.01, seed=3
+        scenarios, points_per_case=12, event_exclusion_s=0.01, seed=3
     )
-    assert points.shape == (20, 5)
+    assert points.shape == (24, 5)
 
     for scenario in scenarios:
         selector = (
