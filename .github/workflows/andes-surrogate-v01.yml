@@ -9,8 +9,10 @@ on:
       - "src/gridguardpinn/andes_training.py"
       - "src/gridguardpinn/andes_evaluation.py"
       - "src/gridguardpinn/andes_gate.py"
+      - "src/gridguardpinn/andes_experiment.py"
       - "src/gridguardpinn/andes_surrogate_protocol.py"
       - "scripts/run_andes_surrogate_experiment.py"
+      - "tests/test_andes_surrogate_physics.py"
       - ".github/workflows/andes-surrogate-v01.yml"
   workflow_dispatch:
 
@@ -33,9 +35,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -e ".[dev,andes]"
+      - name: Verify multi-machine physics and gate tests
+        run: |
+          pytest tests/test_andes_surrogate_physics.py \
+            tests/test_andes_gate.py \
+            tests/test_andes_surrogate_protocol.py
       - name: Run frozen multi-machine experiment
         run: |
-          python scripts/run_andes_surrogate_experiment.py --epochs 1000 --anchors 101 --collocation 56 --seed 17
+          python scripts/run_andes_surrogate_experiment.py \
+            --epochs 1000 \
+            --anchors 101 \
+            --collocation 56 \
+            --seed 17 \
+            --physics-weight 0.02 \
+            --run-label physics-informed
       - name: Upload experiment artifacts
         uses: actions/upload-artifact@v4
         with:
