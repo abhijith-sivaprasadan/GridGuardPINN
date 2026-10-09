@@ -29,10 +29,10 @@ jobs:
           pip install -e ".[dev]"
       - name: Run frozen experiment
         run: |
-          python scripts/run_experiment.py --protocol v0.3 --epochs 1200 --anchors 81 --collocation 64 --seed 7
+          python scripts/run_experiment.py --protocol v0.4 --epochs 2500 --anchors 121 --collocation 96 --seed 7
       - name: Upload experiment artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: gridguardpinn-smib-v0.3
-          path: artifacts/experiment_v0_3/
+          name: gridguardpinn-smib-v0.4
+          path: artifacts/experiment_v0_4/
           retention-days: 30
