@@ -40,18 +40,9 @@ The earlier, previously inspected trained-checkpoint integration audit returned 
 - Model inference omits bus voltage; fallback reference output contains additional observables.
 - GitHub Actions artifacts have retention limits. Archive artifacts for long-lived reproducibility before relying on them as permanent release attachments.
 
-## Release publication checklist
+## Publication verification
 
-- [x] Core CI green at the candidate head.
-- [x] Real ANDES runtime integration workflow green.
-- [x] Trained frozen-checkpoint integration workflow green.
-- [x] Pre-registered new-duration release gate passed and documented.
-- [x] Scoped, transparent limitations.
-- [ ] Produce and verify a permanent source tag `v1.0.0`.
-- [ ] Publish a GitHub Release with this document and long-lived numerical evidence archives.
-- [ ] Verify the published tag and linked assets by immutable IDs and SHA-256.
-
-Do **not** treat the package version or a release-candidate branch as a published tag.
+The publication workflow checks successful core and integrated CI on the **exact release commit** before creating the tag. It uploads the SHA-256-pinned training archive, validation and performance ledgers, vector figures, source-commit identifier, environment snapshot and checksum manifest. It then verifies the GitHub Release is published with the expected tag and minimum number of assets. If the workflow fails, **do not represent a release as published** until the GitHub Releases page and files are independently verified.
 
 ## QA follow-up and archival assets
 
