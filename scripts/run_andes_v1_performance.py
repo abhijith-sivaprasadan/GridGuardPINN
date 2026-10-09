@@ -10,6 +10,7 @@ from pathlib import Path
 
 import numpy as np
 from run_andes_trained_runtime_audit import TRAINED_SHA256
+from run_andes_v1_fresh_duration import channels, reference_fn
 
 from gridguardpinn.andes_reference import resample_trajectory
 from gridguardpinn.andes_runtime import (
@@ -19,7 +20,6 @@ from gridguardpinn.andes_runtime import (
     run_model_case,
 )
 from gridguardpinn.andes_surrogate_protocol import ROBUST_BUSES
-from run_andes_v1_fresh_duration import channels, reference_fn
 
 DURATIONS = {"in_envelope": 0.07, "duration_ood": 0.13}
 GRID = np.linspace(0.0, 2.0, 401)
