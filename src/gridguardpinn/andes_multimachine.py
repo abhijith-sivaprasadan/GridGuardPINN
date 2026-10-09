@@ -24,6 +24,7 @@ class ReferenceBatch:
     trajectories: dict
     case_seconds: dict
     total_seconds: float
+    pipeline_seconds: float
 
 
 def event_aware_times(
@@ -152,7 +153,7 @@ def generate_reference_batch(cases, *, samples: int = 401) -> ReferenceBatch:
     grid = np.linspace(0.0, 2.0, samples)
     reference_map = {}
     case_seconds = {}
-    started = time.perf_counter()
+    pipeline_started = time.perf_counter()
 
     for case in cases:
         case_started = time.perf_counter()
@@ -163,16 +164,17 @@ def generate_reference_batch(cases, *, samples: int = 401) -> ReferenceBatch:
             simulation_end_s=2.0,
             fault_reactance_pu=1e-4,
         )
+        case_seconds[case] = time.perf_counter() - case_started
         sampled = resample_trajectory(native, time_grid_s=grid)
         target_matrix(sampled)
         reference_map[case] = sampled
-        case_seconds[case] = time.perf_counter() - case_started
 
     machine_constants(reference_map)
     return ReferenceBatch(
         trajectories=reference_map,
         case_seconds=case_seconds,
-        total_seconds=time.perf_counter() - started,
+        total_seconds=float(sum(case_seconds.values())),
+        pipeline_seconds=time.perf_counter() - pipeline_started,
     )
 
 
