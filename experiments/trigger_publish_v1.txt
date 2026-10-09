@@ -1,0 +1,1 @@
+Publish GridGuardPINN v1.0.0 from this commit only after its full CI has passed; attach archived frozen evidence and the SHA-256/source/environment manifests.
