@@ -11,7 +11,7 @@ from .dataset import feature_row
 from .dynamics import SMIBScenario
 from .pinn import physics_residuals
 from .reference import simulate_reference
-from .scenarios import scenario_vector
+from .scenarios import classify_ood_factors, scenario_vector
 from .trust import MahalanobisOOD
 
 
@@ -42,9 +42,9 @@ def evaluate_case(
     scenario: SMIBScenario,
     *,
     ood_detector: MahalanobisOOD,
-    samples: int = 201,
-    event_exclusion_s: float = 0.01,
-) -> dict[str, float]:
+    samples: int = 301,
+    event_exclusion_s: float = 0.005,
+) -> dict[str, float | str]:
     reference = simulate_reference(scenario, samples=samples)
     x_np = feature_row(reference.t, scenario)
     x = torch.tensor(x_np, dtype=torch.float32)
@@ -52,7 +52,7 @@ def evaluate_case(
     model.eval()
     with torch.no_grad():
         prediction = model(x).cpu().numpy()
-    metrics = trajectory_metrics(reference.states, prediction)
+    metrics: dict[str, float | str] = trajectory_metrics(reference.states, prediction)
 
     mask = (
         (np.abs(reference.t - scenario.t_fault) > event_exclusion_s)
@@ -70,6 +70,7 @@ def evaluate_case(
             "residual_omega_rms": omega_rms,
             "residual_score": float(residual_score),
             "ood_score": float(ood_detector.score(scenario_vector(scenario))[0]),
+            "ood_factors": classify_ood_factors(scenario),
             "H": scenario.H,
             "D": scenario.D,
             "t_clear": scenario.t_clear,
