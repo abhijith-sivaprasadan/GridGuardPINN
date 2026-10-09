@@ -1,6 +1,10 @@
 name: ANDES multi-machine physics ablation v0.2
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "experiments/trigger_andes_ablation_v02.txt"
   workflow_dispatch:
     inputs:
       epochs:
