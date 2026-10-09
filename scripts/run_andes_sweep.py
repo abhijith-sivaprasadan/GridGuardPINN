@@ -8,7 +8,10 @@ from pathlib import Path
 
 import numpy as np
 
-from gridguardpinn.andes_reference import (\n    resample_trajectory,\n    run_ieee14_fault,\n)
+from gridguardpinn.andes_reference import (
+    resample_trajectory,
+    run_ieee14_fault,
+)
 
 
 FAULT_BUSES = (2, 4, 5, 9, 12, 14)
