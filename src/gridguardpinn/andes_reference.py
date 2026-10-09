@@ -142,6 +142,59 @@ def run_ieee14_packaged_fault(
     )
 
 
+def run_ieee14_fault(
+    *,
+    fault_bus: int,
+    fault_start_s: float = 1.0,
+    fault_clear_s: float = 1.1,
+    simulation_end_s: float = 2.0,
+    fault_resistance_pu: float = 0.0,
+    fault_reactance_pu: float = 1e-4,
+) -> AndesTrajectory:
+    """Run a programmatically specified three-phase fault on dynamic IEEE-14.
+
+    The base case is the packaged dynamic IEEE-14 model without a Fault device.
+    A new Fault is added before system setup so fault location and duration can
+    later become explicit scenario variables.
+    """
+    if not 0.0 < fault_start_s < fault_clear_s < simulation_end_s:
+        raise ValueError(
+            "Require 0 < fault_start_s < fault_clear_s < simulation_end_s."
+        )
+
+    andes = _import_andes()
+    case_path = andes.get_case("ieee14/ieee14.json")
+    system = andes.load(case_path, setup=False)
+    system.add(
+        "Fault",
+        bus=fault_bus,
+        tf=fault_start_s,
+        tc=fault_clear_s,
+        rf=fault_resistance_pu,
+        xf=fault_reactance_pu,
+    )
+    system.setup()
+
+    system.PFlow.run()
+    if system.exit_code != 0:
+        raise RuntimeError(f"ANDES power flow failed with exit_code={system.exit_code}.")
+
+    system.TDS.config.tf = simulation_end_s
+    system.TDS.config.no_tqdm = 1
+    system.TDS.run()
+    if system.exit_code != 0:
+        raise RuntimeError(f"ANDES TDS failed with exit_code={system.exit_code}.")
+
+    return _extract_trajectory(
+        system,
+        andes_version=str(andes.__version__),
+        case_name="ieee14/ieee14.json+programmatic_fault",
+        fault_bus=fault_bus,
+        fault_start_s=fault_start_s,
+        fault_clear_s=fault_clear_s,
+    )
+
+
 def run_kundur_fault(
     *,
     fault_bus: int = 5,
