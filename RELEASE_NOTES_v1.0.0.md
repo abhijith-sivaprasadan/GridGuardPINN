@@ -1,6 +1,6 @@
 # GridGuardPINN v1.0.0 — Research Demonstrator
 
-**Status:** release candidate; not a published GitHub Release until a tag/release is created.
+**Status:** release documentation; publication status must be checked against the GitHub Releases page.
 
 ## Scope
 
@@ -52,3 +52,13 @@ The earlier, previously inspected trained-checkpoint integration audit returned 
 - [ ] Verify the published tag and linked assets by immutable IDs and SHA-256.
 
 Do **not** treat the package version or a release-candidate branch as a published tag.
+
+## QA follow-up and archival assets
+
+The QA remediation includes strict router numeric validation, explicit one-hot checkpoint metadata, precise physics-residual fallback reasons, canonical ANDES v2.0.0 case hash and generator-order verification in the CLI, full-horizon time grids, and standard CI incorporating real ANDES plus PyTorch. CLI routing JSON additionally records the residual score, residual threshold and reference fallback solve time. These changes do not alter the frozen training data, model parameters or calibration thresholds.
+
+See [the internal QA report](docs/qa_audit_v1_0_2026_10_09.md), [verified external literature context](docs/literature_context_v1_0.md), and [reproducible vector figures](docs/figures/).
+
+A GitHub Release should include the four original evidence archives, two SVG figures, a resolved Python environment snapshot, the exact source commit, and a SHA-256 manifest. The environment snapshot is documentation of one successful build, **not** a universal cross-platform dependency lock. Historical model artifacts are authenticated by hashes but do not embed a contemporaneous case-file fingerprint; this limitation cannot be retroactively erased.
+
+The package and report remain **research-only**. No other-grid validation or formal peer review has occurred.
