@@ -12,9 +12,9 @@ def test_dataset_shapes_and_event_exclusion():
     assert np.all(np.isfinite(data.y))
 
     points = build_collocation_points(
-        scenarios, points_per_case=12, event_exclusion_s=0.01, seed=3
+        scenarios, points_per_case=14, event_exclusion_s=0.01, seed=3
     )
-    assert points.shape == (24, 5)
+    assert points.shape == (28, 5)
 
     for scenario in scenarios:
         selector = (
