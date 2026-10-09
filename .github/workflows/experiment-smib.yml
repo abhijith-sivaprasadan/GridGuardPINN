@@ -10,6 +10,10 @@ on:
       - ".github/workflows/experiment-smib.yml"
   workflow_dispatch:
 
+concurrency:
+  group: smib-pinn-experiment-main
+  cancel-in-progress: true
+
 jobs:
   experiment:
     runs-on: ubuntu-latest
