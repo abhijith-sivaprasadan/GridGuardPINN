@@ -126,10 +126,16 @@ def run_routed_case(
     # Reference failure is an explicit error; never silently return a surrogate.
     native = reference(fault_bus, fault_duration_s)
     from .andes_reference import resample_trajectory
-    from .andes_multimachine import target_matrix
-
     sampled = resample_trajectory(native, time_grid_s=grid)
-    values = target_matrix(sampled)
+    channels = (
+        sampled.generator_angle_rad,
+        sampled.generator_speed_pu,
+        sampled.generator_mechanical_torque_pu,
+        sampled.generator_electrical_torque_pu,
+    )
+    if any(channel is None for channel in channels):
+        raise RuntimeError("Reference trajectory lacks electromechanical channels.")
+    values = np.column_stack(channels)
     if not np.all(np.isfinite(values)):
         raise RuntimeError("Reference simulator returned non-finite outputs.")
     return RuntimeResult("reference", decision, grid, values, sampled)
