@@ -29,3 +29,11 @@ def test_v03_fresh_holdout_sizes():
     assert len(splits["validation"]) == 16
     assert len(splits["test_id"]) == 24
     assert len(splits["ood"]) == 24
+
+
+def test_v04_fresh_holdout_sizes():
+    splits = splits_v04()
+    assert len(splits["train"]) == 24
+    assert len(splits["validation"]) == 16
+    assert len(splits["test_id"]) == 32
+    assert len(splits["ood"]) == 32
