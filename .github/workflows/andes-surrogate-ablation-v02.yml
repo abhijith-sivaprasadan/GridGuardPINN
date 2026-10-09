@@ -42,8 +42,8 @@ jobs:
             tests/test_andes_surrogate_protocol.py
       - name: Run pre-registered ablation
         env:
-          ABLATION_EPOCHS: ${{ inputs.epochs }}
-          ABLATION_SEEDS: ${{ inputs.seeds }}
+          ABLATION_EPOCHS: ${{ inputs.epochs || '1000' }}
+          ABLATION_SEEDS: ${{ inputs.seeds || '17 29 41' }}
         run: |
           python scripts/run_andes_ablation.py \
             --epochs "$ABLATION_EPOCHS" \
