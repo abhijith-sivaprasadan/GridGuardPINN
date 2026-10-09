@@ -1,7 +1,7 @@
-"""ANDES transient-stability reference adapter.
+"""ANDES transient-stability reference adapters.
 
-This module intentionally contains no surrogate logic. It establishes a
-reproducible, simulator-backed reference trajectory that later learned models
+This module intentionally contains no surrogate logic. It establishes
+reproducible simulator-backed reference trajectories that later learned models
 can be tested against.
 """
 
@@ -23,6 +23,7 @@ class AndesTrajectory:
     fault_start_s: float
     fault_clear_s: float
     andes_version: str
+    case_name: str
 
     def __post_init__(self) -> None:
         n = self.time_s.size
@@ -43,6 +44,7 @@ class AndesTrajectory:
         speed_deviation = np.abs(self.generator_speed_pu - 1.0)
         return {
             "andes_version": self.andes_version,
+            "case_name": self.case_name,
             "fault_bus": self.fault_bus,
             "fault_start_s": self.fault_start_s,
             "fault_clear_s": self.fault_clear_s,
@@ -66,6 +68,80 @@ def _import_andes():
     return andes
 
 
+def _extract_trajectory(
+    system,
+    *,
+    andes_version: str,
+    case_name: str,
+    fault_bus: int,
+    fault_start_s: float,
+    fault_clear_s: float,
+) -> AndesTrajectory:
+    time_s = np.asarray(system.dae.ts.t, dtype=float).copy()
+    generator_speed = np.asarray(
+        system.dae.ts.x[:, system.GENROU.omega.a],
+        dtype=float,
+    ).copy()
+    bus_voltage = np.asarray(
+        system.dae.ts.y[:, system.Bus.v.a],
+        dtype=float,
+    ).copy()
+
+    if not (
+        np.all(np.isfinite(time_s))
+        and np.all(np.isfinite(generator_speed))
+        and np.all(np.isfinite(bus_voltage))
+    ):
+        raise RuntimeError("ANDES returned non-finite trajectory values.")
+
+    return AndesTrajectory(
+        time_s=time_s,
+        generator_speed_pu=generator_speed,
+        bus_voltage_pu=bus_voltage,
+        fault_bus=fault_bus,
+        fault_start_s=fault_start_s,
+        fault_clear_s=fault_clear_s,
+        andes_version=andes_version,
+        case_name=case_name,
+    )
+
+
+def run_ieee14_packaged_fault(
+    *,
+    simulation_end_s: float = 2.0,
+) -> AndesTrajectory:
+    """Run ANDES's maintained IEEE-14 three-phase-fault test case.
+
+    The packaged case contains five GENROU machines and a three-phase fault on
+    bus 9 from 1.0 to 1.1 s. It is also used by the upstream ANDES test suite.
+    """
+    if simulation_end_s <= 1.1:
+        raise ValueError("simulation_end_s must extend beyond fault clearing.")
+
+    andes = _import_andes()
+    case_path = andes.get_case("ieee14/ieee14_fault.xlsx")
+    system = andes.load(case_path)
+
+    system.PFlow.run()
+    if system.exit_code != 0:
+        raise RuntimeError(f"ANDES power flow failed with exit_code={system.exit_code}.")
+
+    system.TDS.config.tf = simulation_end_s
+    system.TDS.config.no_tqdm = 1
+    system.TDS.run()
+    if system.exit_code != 0:
+        raise RuntimeError(f"ANDES TDS failed with exit_code={system.exit_code}.")
+
+    return _extract_trajectory(
+        system,
+        andes_version=str(andes.__version__),
+        case_name="ieee14/ieee14_fault.xlsx",
+        fault_bus=9,
+        fault_start_s=1.0,
+        fault_clear_s=1.1,
+    )
+
+
 def run_kundur_fault(
     *,
     fault_bus: int = 5,
@@ -77,9 +153,9 @@ def run_kundur_fault(
 ) -> AndesTrajectory:
     """Run the packaged Kundur case with one added three-phase bus fault.
 
-    ANDES's packaged Kundur case includes a timed Toggle. It is disabled before
-    the custom fault is added so the returned trajectory isolates the requested
-    fault event.
+    This is retained as a robustness case. Some severe configurations can drive
+    the reference solver to a zero timestep; such failures are treated as
+    simulator outcomes rather than silently discarded.
     """
     if not 0.0 < fault_start_s < fault_clear_s < simulation_end_s:
         raise ValueError(
@@ -114,31 +190,13 @@ def run_kundur_fault(
     if system.exit_code != 0:
         raise RuntimeError(f"ANDES TDS failed with exit_code={system.exit_code}.")
 
-    time_s = np.asarray(system.dae.ts.t, dtype=float).copy()
-    generator_speed = np.asarray(
-        system.dae.ts.x[:, system.GENROU.omega.a],
-        dtype=float,
-    ).copy()
-    bus_voltage = np.asarray(
-        system.dae.ts.y[:, system.Bus.v.a],
-        dtype=float,
-    ).copy()
-
-    if not (
-        np.all(np.isfinite(time_s))
-        and np.all(np.isfinite(generator_speed))
-        and np.all(np.isfinite(bus_voltage))
-    ):
-        raise RuntimeError("ANDES returned non-finite trajectory values.")
-
-    return AndesTrajectory(
-        time_s=time_s,
-        generator_speed_pu=generator_speed,
-        bus_voltage_pu=bus_voltage,
+    return _extract_trajectory(
+        system,
+        andes_version=str(andes.__version__),
+        case_name="kundur/kundur_full.xlsx",
         fault_bus=fault_bus,
         fault_start_s=fault_start_s,
         fault_clear_s=fault_clear_s,
-        andes_version=str(andes.__version__),
     )
 
 
@@ -177,4 +235,5 @@ def resample_trajectory(
         fault_start_s=trajectory.fault_start_s,
         fault_clear_s=trajectory.fault_clear_s,
         andes_version=trajectory.andes_version,
+        case_name=trajectory.case_name,
     )
