@@ -1,0 +1,38 @@
+name: ANDES IEEE-14 expanded sweep
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/run_andes_sweep_v02.py"
+      - "src/gridguardpinn/andes_reference.py"
+      - "docs/andes_sweep_protocol_v0_2.md"
+      - ".github/workflows/andes-sweep-v02.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: andes-ieee14-sweep-v0-2
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install ANDES integration
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,andes]"
+      - name: Run frozen 84-case IEEE-14 sweep
+        run: python scripts/run_andes_sweep_v02.py
+      - name: Upload expanded reference dataset
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridguardpinn-andes-ieee14-sweep-v0.2
+          path: artifacts/andes_ieee14_sweep_v0_2/
+          retention-days: 30

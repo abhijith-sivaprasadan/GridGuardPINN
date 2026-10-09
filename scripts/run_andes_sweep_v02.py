@@ -1,4 +1,4 @@
-"""Run the frozen ANDES IEEE-14 fault-location/duration sweep."""
+"""Run the frozen 84-case ANDES IEEE-14 feasibility sweep v0.2."""
 
 from __future__ import annotations
 
@@ -11,15 +11,15 @@ import numpy as np
 from gridguardpinn.andes_reference import resample_trajectory, run_ieee14_fault
 
 
-FAULT_BUSES = (2, 4, 5, 9, 12, 14)
-FAULT_DURATIONS_S = (0.06, 0.10, 0.14)
+FAULT_BUSES = tuple(range(1, 15))
+FAULT_DURATIONS_S = (0.04, 0.06, 0.08, 0.10, 0.12, 0.14)
 FAULT_START_S = 1.0
 SIMULATION_END_S = 2.0
 GRID = np.linspace(0.0, SIMULATION_END_S, 401)
 
 
 def main() -> None:
-    output = Path("artifacts/andes_ieee14_sweep_v0_1")
+    output = Path("artifacts/andes_ieee14_sweep_v0_2")
     output.mkdir(parents=True, exist_ok=True)
 
     case_rows: list[dict[str, object]] = []
@@ -37,7 +37,6 @@ def main() -> None:
                 "fault_start_s": FAULT_START_S,
                 "fault_clear_s": clear_time,
             }
-
             try:
                 native = run_ieee14_fault(
                     fault_bus=bus,
@@ -47,6 +46,8 @@ def main() -> None:
                     fault_reactance_pu=1e-4,
                 )
                 trajectory = resample_trajectory(native, time_grid_s=GRID)
+                if trajectory.generator_angle_rad is None:
+                    raise RuntimeError("GENROU rotor-angle trajectory was not extracted.")
                 metrics = native.metrics()
                 case_rows.append(
                     {
@@ -58,14 +59,17 @@ def main() -> None:
                         "max_abs_speed_deviation_pu": metrics[
                             "max_abs_speed_deviation_pu"
                         ],
+                        "max_abs_angle_excursion_rad": metrics[
+                            "max_abs_angle_excursion_rad"
+                        ],
                         "min_bus_voltage_pu": metrics["min_bus_voltage_pu"],
                         "max_bus_voltage_pu": metrics["max_bus_voltage_pu"],
                     }
                 )
-
                 for i, t in enumerate(trajectory.time_s):
                     trajectory_rows.append(
                         [case_id, bus, duration, float(t)]
+                        + trajectory.generator_angle_rad[i].tolist()
                         + trajectory.generator_speed_pu[i].tolist()
                         + trajectory.bus_voltage_pu[i].tolist()
                     )
@@ -78,20 +82,21 @@ def main() -> None:
                         "error_message": str(exc),
                         "native_time_points": "",
                         "max_abs_speed_deviation_pu": "",
+                        "max_abs_angle_excursion_rad": "",
                         "min_bus_voltage_pu": "",
                         "max_bus_voltage_pu": "",
                     }
                 )
 
-    case_fields = list(case_rows[0].keys())
     with (output / "case_summary.csv").open(
         "w", newline="", encoding="utf-8"
     ) as handle:
-        writer = csv.DictWriter(handle, fieldnames=case_fields)
+        writer = csv.DictWriter(handle, fieldnames=list(case_rows[0].keys()))
         writer.writeheader()
         writer.writerows(case_rows)
 
     trajectory_header = ["case_id", "fault_bus", "fault_duration_s", "time_s"]
+    trajectory_header += [f"delta_gen_{i}" for i in range(5)]
     trajectory_header += [f"omega_gen_{i}" for i in range(5)]
     trajectory_header += [f"v_bus_{i}" for i in range(14)]
     with (output / "trajectories.csv").open(
@@ -103,22 +108,23 @@ def main() -> None:
 
     successful = [row for row in case_rows if row["status"] == "success"]
     failed = [row for row in case_rows if row["status"] == "failed"]
-    speed_values = [float(row["max_abs_speed_deviation_pu"]) for row in successful]
-    voltage_values = [float(row["min_bus_voltage_pu"]) for row in successful]
+    success_by_bus = {
+        str(bus): sum(
+            row["status"] == "success" and row["fault_bus"] == bus
+            for row in case_rows
+        )
+        for bus in FAULT_BUSES
+    }
 
     summary = {
-        "protocol": "andes-ieee14-sweep-v0.1",
+        "protocol": "andes-ieee14-sweep-v0.2",
         "planned_cases": len(case_rows),
         "successful_cases": len(successful),
         "failed_cases": len(failed),
+        "success_fraction": len(successful) / len(case_rows),
         "fault_buses": list(FAULT_BUSES),
         "fault_durations_s": list(FAULT_DURATIONS_S),
-        "successful_speed_deviation_range_pu": (
-            [min(speed_values), max(speed_values)] if speed_values else None
-        ),
-        "successful_min_bus_voltage_range_pu": (
-            [min(voltage_values), max(voltage_values)] if voltage_values else None
-        ),
+        "successes_by_bus": success_by_bus,
         "failures": [
             {
                 "case_id": row["case_id"],
@@ -134,11 +140,10 @@ def main() -> None:
         json.dumps(summary, indent=2),
         encoding="utf-8",
     )
-
     if not successful:
-        raise RuntimeError("All ANDES sweep cases failed; no reference dataset produced.")
+        raise RuntimeError("All ANDES v0.2 sweep cases failed.")
 
-    print("ANDES_SWEEP_SUMMARY_JSON=" + json.dumps(summary))
+    print("ANDES_SWEEP_V02_SUMMARY_JSON=" + json.dumps(summary))
 
 
 if __name__ == "__main__":

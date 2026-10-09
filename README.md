@@ -239,15 +239,24 @@ The GitHub Actions experiment workflow records artifacts including:
 - `training_history.json`;
 - model checkpoint.
 
+## Multi-machine reference milestone
+
+The reduced-order SMIB phase is now complemented by a CI-verified **ANDES 2.0.0 IEEE-14 transient-stability reference path**.
+
+The first frozen location/duration sweep evaluated 18 three-phase-fault cases across six buses and three clearing durations. **11/18 completed successfully and 7/18 were retained as explicit simulator failures**, rather than silently removed. The next frozen sweep expands this feasibility map to all 14 IEEE-14 buses and six fault durations while also exporting GENROU rotor-angle trajectories for physics-informed residual work.
+
+See [ANDES reference result](docs/results_andes_reference_v0_1.md), [18-case sweep result](docs/results_andes_sweep_v0_1.md), and [84-case sweep protocol](docs/andes_sweep_protocol_v0_2.md).
+
 ## Roadmap
 
 - **M0 — reference dynamics:** complete.
-- **M1 — parametric PINN baseline:** complete.
+- **M1 — parametric SMIB PINN baseline:** complete.
 - **M2 — deterministic trust gate:** implemented and evaluated.
-- **M3 — stress testing:** active; one-factor OOD mechanisms evaluated.
-- **M4 — surrogate-accuracy refinement:** active under frozen successive holdouts.
-- **M5 — simulator upgrade:** repeat the protocol using an open-source power-system transient-stability reference such as ANDES on a standard multi-machine case.
-- **M6 — orchestration:** only after the trust mechanism is useful, add a tool-calling orchestration layer whose job is workflow routing, not safety judgement.
+- **M3 — SMIB stress testing:** complete enough for method development; v0.4 preserved as regression evidence.
+- **M4 — ANDES multi-machine reference:** active; IEEE-14 dynamic faults and explicit simulator-failure handling are CI verified.
+- **M5 — multi-machine surrogate:** next; freeze train/validation/test protocols only after the expanded reference-feasibility sweep is complete.
+- **M6 — multi-machine trust layer:** evaluate physics/uncertainty/OOD signals and deterministic fallback on held-out ANDES cases.
+- **M7 — orchestration:** only after the trust mechanism is useful, add a tool-calling orchestration layer whose job is workflow routing, not safety judgement.
 
 ## Scientific boundaries
 

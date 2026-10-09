@@ -24,6 +24,7 @@ class AndesTrajectory:
     fault_clear_s: float
     andes_version: str
     case_name: str
+    generator_angle_rad: np.ndarray | None = None
 
     def __post_init__(self) -> None:
         n = self.time_s.size
@@ -35,13 +36,27 @@ class AndesTrajectory:
             raise ValueError("Generator-speed rows must align with time.")
         if self.bus_voltage_pu.shape[0] != n:
             raise ValueError("Bus-voltage rows must align with time.")
+        if self.generator_angle_rad is not None:
+            if self.generator_angle_rad.ndim != 2:
+                raise ValueError("generator_angle_rad must be two-dimensional.")
+            if self.generator_angle_rad.shape != self.generator_speed_pu.shape:
+                raise ValueError(
+                    "Generator-angle shape must match generator-speed shape."
+                )
 
     @property
     def fault_duration_s(self) -> float:
         return self.fault_clear_s - self.fault_start_s
 
-    def metrics(self) -> dict[str, float | int | str]:
+    def metrics(self) -> dict[str, float | int | str | None]:
         speed_deviation = np.abs(self.generator_speed_pu - 1.0)
+        if self.generator_angle_rad is None:
+            angle_excursion = None
+        else:
+            initial = self.generator_angle_rad[0:1, :]
+            angle_excursion = float(
+                np.max(np.abs(self.generator_angle_rad - initial))
+            )
         return {
             "andes_version": self.andes_version,
             "case_name": self.case_name,
@@ -53,6 +68,7 @@ class AndesTrajectory:
             "n_generators": int(self.generator_speed_pu.shape[1]),
             "n_buses": int(self.bus_voltage_pu.shape[1]),
             "max_abs_speed_deviation_pu": float(np.max(speed_deviation)),
+            "max_abs_angle_excursion_rad": angle_excursion,
             "min_bus_voltage_pu": float(np.min(self.bus_voltage_pu)),
             "max_bus_voltage_pu": float(np.max(self.bus_voltage_pu)),
         }
@@ -82,21 +98,23 @@ def _extract_trajectory(
         system.dae.ts.x[:, system.GENROU.omega.a],
         dtype=float,
     ).copy()
+    generator_angle = np.asarray(
+        system.dae.ts.x[:, system.GENROU.delta.a],
+        dtype=float,
+    ).copy()
     bus_voltage = np.asarray(
         system.dae.ts.y[:, system.Bus.v.a],
         dtype=float,
     ).copy()
 
-    if not (
-        np.all(np.isfinite(time_s))
-        and np.all(np.isfinite(generator_speed))
-        and np.all(np.isfinite(bus_voltage))
-    ):
+    arrays = (time_s, generator_speed, generator_angle, bus_voltage)
+    if not all(np.all(np.isfinite(array)) for array in arrays):
         raise RuntimeError("ANDES returned non-finite trajectory values.")
 
     return AndesTrajectory(
         time_s=time_s,
         generator_speed_pu=generator_speed,
+        generator_angle_rad=generator_angle,
         bus_voltage_pu=bus_voltage,
         fault_bus=fault_bus,
         fault_start_s=fault_start_s,
@@ -110,11 +128,7 @@ def run_ieee14_packaged_fault(
     *,
     simulation_end_s: float = 2.0,
 ) -> AndesTrajectory:
-    """Run ANDES's maintained IEEE-14 three-phase-fault test case.
-
-    The packaged case contains five GENROU machines and a three-phase fault on
-    bus 9 from 1.0 to 1.1 s. It is also used by the upstream ANDES test suite.
-    """
+    """Run ANDES's maintained IEEE-14 three-phase-fault test case."""
     if simulation_end_s <= 1.1:
         raise ValueError("simulation_end_s must extend beyond fault clearing.")
 
@@ -151,12 +165,7 @@ def run_ieee14_fault(
     fault_resistance_pu: float = 0.0,
     fault_reactance_pu: float = 1e-4,
 ) -> AndesTrajectory:
-    """Run a programmatically specified three-phase fault on dynamic IEEE-14.
-
-    The base case is the packaged dynamic IEEE-14 model without a Fault device.
-    A new Fault is added before system setup so fault location and duration can
-    later become explicit scenario variables.
-    """
+    """Run a programmatically specified three-phase fault on dynamic IEEE-14."""
     if not 0.0 < fault_start_s < fault_clear_s < simulation_end_s:
         raise ValueError(
             "Require 0 < fault_start_s < fault_clear_s < simulation_end_s."
@@ -204,12 +213,7 @@ def run_kundur_fault(
     fault_resistance_pu: float = 0.0,
     fault_reactance_pu: float = 1e-6,
 ) -> AndesTrajectory:
-    """Run the packaged Kundur case with one added three-phase bus fault.
-
-    This is retained as a robustness case. Some severe configurations can drive
-    the reference solver to a zero timestep; such failures are treated as
-    simulator outcomes rather than silently discarded.
-    """
+    """Run the packaged Kundur case with one added three-phase bus fault."""
     if not 0.0 < fault_start_s < fault_clear_s < simulation_end_s:
         raise ValueError(
             "Require 0 < fault_start_s < fault_clear_s < simulation_end_s."
@@ -279,10 +283,19 @@ def resample_trajectory(
             for i in range(trajectory.bus_voltage_pu.shape[1])
         ]
     )
+    angle = None
+    if trajectory.generator_angle_rad is not None:
+        angle = np.column_stack(
+            [
+                np.interp(grid, trajectory.time_s, trajectory.generator_angle_rad[:, i])
+                for i in range(trajectory.generator_angle_rad.shape[1])
+            ]
+        )
 
     return AndesTrajectory(
         time_s=grid,
         generator_speed_pu=speed,
+        generator_angle_rad=angle,
         bus_voltage_pu=voltage,
         fault_bus=trajectory.fault_bus,
         fault_start_s=trajectory.fault_start_s,
