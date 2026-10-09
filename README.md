@@ -196,10 +196,19 @@ src/gridguardpinn/
   evaluation.py     # trajectory/residual/OOD evaluation
   calibration.py    # validation-only trust-gate calibration
   trust.py          # trust signals and gate metrics
+  andes_reference.py # ANDES IEEE-14 transient reference adapter
+  andes_surrogate_protocol.py # frozen multi-machine train/validation/test cases
+  andes_surrogate.py # multi-machine swing-equation-informed neural surrogate
+  andes_multimachine.py # reference-data assembly for ANDES experiments
+  andes_training.py  # multi-machine training loop
+  andes_evaluation.py # trajectory/residual evaluation
+  andes_gate.py      # validation-only multi-machine gate calibration
 
 scripts/
   run_reference_sweep.py
   run_experiment.py
+  run_andes_sweep_v02.py
+  run_andes_surrogate_experiment.py
 
 docs/
   research_protocol.md
@@ -238,6 +247,23 @@ The GitHub Actions experiment workflow records artifacts including:
 - `case_metrics.csv`;
 - `training_history.json`;
 - model checkpoint.
+
+## Run the first ANDES multi-machine surrogate experiment
+
+The frozen v0.1 experiment uses the 63 successful IEEE-14 reference cases
+partitioned before training into 21 train, 7 validation, 7 fresh ID test,
+7 duration-OOD, and 21 unseen-location edge cases.
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install -e ".[dev,andes]"
+python scripts/run_andes_surrogate_experiment.py --epochs 1000 --anchors 101 --collocation 56 --seed 17
+```
+
+The first multi-machine model predicts five machines' rotor angle, speed,
+mechanical torque, and electrical torque. Its physics loss enforces the shared
+ANDES GENBase electromechanical equations. It is therefore described as a
+**swing-equation-informed GENROU surrogate**, not as a full GENROU-DAE PINN.
 
 ## Multi-machine reference milestone
 

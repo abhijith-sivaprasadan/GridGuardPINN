@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 ROBUST_BUSES = (3, 6, 7, 8, 9, 11, 14)
 TRAIN_DURATIONS_S = (0.04, 0.08, 0.12)
 VALIDATION_DURATION_S = 0.06

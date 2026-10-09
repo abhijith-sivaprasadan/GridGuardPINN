@@ -10,7 +10,6 @@ import numpy as np
 
 from gridguardpinn.andes_reference import resample_trajectory, run_ieee14_fault
 
-
 FAULT_BUSES = (2, 4, 5, 9, 12, 14)
 FAULT_DURATIONS_S = (0.06, 0.10, 0.14)
 FAULT_START_S = 1.0

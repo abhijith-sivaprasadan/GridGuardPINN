@@ -1,0 +1,44 @@
+name: ANDES multi-machine surrogate v0.1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/gridguardpinn/andes_surrogate.py"
+      - "src/gridguardpinn/andes_multimachine.py"
+      - "src/gridguardpinn/andes_training.py"
+      - "src/gridguardpinn/andes_evaluation.py"
+      - "src/gridguardpinn/andes_gate.py"
+      - "src/gridguardpinn/andes_surrogate_protocol.py"
+      - "scripts/run_andes_surrogate_experiment.py"
+      - ".github/workflows/andes-surrogate-v01.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: andes-multimachine-surrogate-v0-1
+  cancel-in-progress: true
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install PyTorch, ANDES, and project
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,andes]"
+      - name: Run frozen multi-machine experiment
+        run: |
+          python scripts/run_andes_surrogate_experiment.py --epochs 1000 --anchors 101 --collocation 56 --seed 17
+      - name: Upload experiment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridguardpinn-andes-surrogate-v0.1
+          path: artifacts/andes_surrogate_v0_1/
+          retention-days: 30
