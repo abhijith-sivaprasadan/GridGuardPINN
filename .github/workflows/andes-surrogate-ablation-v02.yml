@@ -1,0 +1,54 @@
+name: ANDES multi-machine physics ablation v0.2
+
+on:
+  workflow_dispatch:
+    inputs:
+      epochs:
+        description: Training epochs per model
+        required: true
+        default: "1000"
+      seeds:
+        description: Space-separated frozen seeds
+        required: true
+        default: "17 29 41"
+
+concurrency:
+  group: andes-multimachine-ablation-v0-2
+  cancel-in-progress: false
+
+jobs:
+  ablation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install PyTorch, ANDES, and project
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,andes]"
+      - name: Verify multi-machine physics and gate tests
+        run: |
+          pytest tests/test_andes_surrogate_physics.py \
+            tests/test_andes_gate.py \
+            tests/test_andes_surrogate_protocol.py
+      - name: Run pre-registered ablation
+        env:
+          ABLATION_EPOCHS: ${{ inputs.epochs }}
+          ABLATION_SEEDS: ${{ inputs.seeds }}
+        run: |
+          python scripts/run_andes_ablation.py \
+            --epochs "$ABLATION_EPOCHS" \
+            --anchors 101 \
+            --collocation 56 \
+            --seeds $ABLATION_SEEDS
+      - name: Upload ablation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridguardpinn-andes-ablation-v0.2
+          path: artifacts/andes_surrogate_ablation_v0_2/
+          retention-days: 30
