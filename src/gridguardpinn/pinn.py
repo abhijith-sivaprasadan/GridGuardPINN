@@ -10,20 +10,21 @@ from torch import nn
 
 
 class ParametricPINN(nn.Module):
-    """Event-aware MLP conditioned on time and four scenario parameters."""
+    """Event-aware MLP with fixed Fourier time features."""
 
     def __init__(
         self,
         centre: np.ndarray,
         scale: np.ndarray,
         *,
-        hidden_width: int = 64,
-        hidden_layers: int = 4,
+        hidden_width: int = 96,
+        hidden_layers: int = 5,
         delta0: float,
         t_fault: float = 0.10,
         delta_output_scale: float = 1.0,
         omega_output_scale: float = 0.01,
         initial_condition_tau_s: float = 0.15,
+        fourier_frequencies_hz: tuple[float, ...] = (0.5, 1.0, 2.0, 4.0),
     ) -> None:
         super().__init__()
         self.register_buffer("centre", torch.as_tensor(centre, dtype=torch.float32))
@@ -33,9 +34,10 @@ class ParametricPINN(nn.Module):
         self.delta_output_scale = float(delta_output_scale)
         self.omega_output_scale = float(omega_output_scale)
         self.initial_condition_tau_s = float(initial_condition_tau_s)
+        self.fourier_frequencies_hz = tuple(float(x) for x in fourier_frequencies_hz)
 
-        # Five normalized physical inputs plus four event-aware features.
-        layers: list[nn.Module] = [nn.Linear(9, hidden_width), nn.Tanh()]
+        input_dim = 5 + 4 + 2 * len(self.fourier_frequencies_hz)
+        layers: list[nn.Module] = [nn.Linear(input_dim, hidden_width), nn.Tanh()]
         for _ in range(hidden_layers - 1):
             layers.extend([nn.Linear(hidden_width, hidden_width), nn.Tanh()])
         layers.append(nn.Linear(hidden_width, 2))
@@ -47,16 +49,24 @@ class ParametricPINN(nn.Module):
 
         fault_on = ((t >= self.t_fault) & (t < t_clear)).to(t.dtype)
         post_fault = (t >= t_clear).to(t.dtype)
-
-        # Continuous age features improve representation away from the exact
-        # switching instants, which are excluded from physics collocation.
         fault_age = torch.clamp((t - self.t_fault) / 0.20, min=0.0, max=1.0)
         clear_age = torch.clamp((t - t_clear) / 0.75, min=0.0, max=1.0)
         return torch.cat([fault_on, post_fault, fault_age, clear_age], dim=1)
 
+    def _fourier_features(self, x: torch.Tensor) -> torch.Tensor:
+        t = x[:, 0:1]
+        features: list[torch.Tensor] = []
+        for frequency in self.fourier_frequencies_hz:
+            phase = 2.0 * math.pi * frequency * t
+            features.extend([torch.sin(phase), torch.cos(phase)])
+        return torch.cat(features, dim=1)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         z = (x - self.centre) / self.scale
-        z = torch.cat([z, self._event_features(x)], dim=1)
+        z = torch.cat(
+            [z, self._event_features(x), self._fourier_features(x)],
+            dim=1,
+        )
         raw = self.network(z)
 
         t = x[:, 0:1]
