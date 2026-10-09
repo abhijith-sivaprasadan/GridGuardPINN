@@ -49,3 +49,21 @@ def test_unready_or_missing_reference_never_enables_surrogate():
     decision = decide(reference_available=False)
     assert not decision.use_surrogate
     assert decision.reason == "reference_unavailable_stop"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("fault_duration_s", "0.08"),
+        ("fault_duration_s", True),
+        ("fault_duration_s", None),
+        ("residual_score", "0.1"),
+        ("residual_score", False),
+        ("residual_threshold", "0.2"),
+        ("residual_threshold", None),
+    ],
+)
+def test_invalid_numeric_input_fails_closed_without_crashing(field, value):
+    decision = decide(**{field: value})
+    assert decision.route == Route.RUN_REFERENCE
+    assert decision.reason == "invalid_input"
