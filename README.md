@@ -10,7 +10,7 @@ The project uses a classical single-machine infinite-bus (SMIB) swing-equation s
 
 > **v1.0 research demonstrator (October 2026):** This repository provides reproducible surrogate experiments and a fail-closed ANDES case-routing policy, **not** a certified safe grid-control application. See [v1.0 release scope](docs/v1_0_release_scope.md), [frozen v0.3 location-encoding results](docs/results_andes_location_encoding_v0_3.md), and [conservative router](src/gridguardpinn/andes_router.py). The network-aware model improves unseen-location error in 2/3 seeds but **residual-only gating falsely accepts inaccurate unseen-location predictions**, so the v1.0 default rejects all unseen fault buses.\n\n## Published v1.0.0 research release
 
-The immutable [v1.0.0 GitHub Release](https://github.com/abhijith-sivaprasadan/GridGuardPINN/releases/tag/v1.0.0) contains the original frozen model archive, case-level validation and randomized timing ledgers, two vector figures, exact source commit, resolved dependency snapshot, and SHA-256 manifest. The release is tied to commit `839fd6e103c5b3ff249e3e550e08ffb5c690c54f`. **It is a research demonstrator, not operational grid software or a peer-reviewed publication.**
+The versioned [v1.0.0 GitHub Release](https://github.com/abhijith-sivaprasadan/GridGuardPINN/releases/tag/v1.0.0) contains the original frozen model archive, case-level validation and randomized timing ledgers, two vector figures, exact source commit, resolved dependency snapshot, and SHA-256 manifest. The released tag currently points to commit `839fd6e103c5b3ff249e3e550e08ffb5c690c54f`. **It is a research demonstrator, not operational grid software or a peer-reviewed publication.**
 
 ## Research working paper
 
