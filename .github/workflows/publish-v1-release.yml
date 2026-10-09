@@ -50,7 +50,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v1.0.0 release-assets/*.zip release-assets/SHA256SUMS.txt --target "$GITHUB_SHA" --title "GridGuardPINN v1.0.0 — IEEE-14 research demonstrator" --notes-file RELEASE_NOTES_v1.0.0.md --verify-tag=false
+          gh release create v1.0.0 release-assets/*.zip release-assets/SHA256SUMS.txt --target "$GITHUB_SHA" --title "GridGuardPINN v1.0.0 — IEEE-14 research demonstrator" --notes-file RELEASE_NOTES_v1.0.0.md
       - name: Verify published tag and release assets
         env:
           GH_TOKEN: ${{ github.token }}
