@@ -84,6 +84,7 @@ def train_andes_surrogate(
     validation_cases,
     *,
     config: AndesTrainingConfig,
+    fault_descriptors: dict[int, np.ndarray] | None = None,
 ) -> AndesTrainingResult:
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
@@ -93,16 +94,19 @@ def train_andes_surrogate(
         reference_map,
         train_cases,
         anchors_per_case=config.anchors_per_case,
+        fault_descriptors=fault_descriptors,
     )
     x_val_np, y_val_np = supervised_arrays(
         reference_map,
         validation_cases,
         anchors_per_case=config.anchors_per_case,
+        fault_descriptors=fault_descriptors,
     )
     x_phys_np = collocation_array(
         train_cases,
         points_per_case=config.collocation_per_case,
         seed=config.seed,
+        fault_descriptors=fault_descriptors,
     )
     constants = machine_constants(reference_map)
     shift, scale = _output_scaling(y_train_np)
