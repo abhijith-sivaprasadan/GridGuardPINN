@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from gridguardpinn.andes_reference import resample_trajectory, run_ieee14_fault
+from gridguardpinn.andes_reference import (\n    resample_trajectory,\n    run_ieee14_fault,\n)
 
 
 FAULT_BUSES = (2, 4, 5, 9, 12, 14)
@@ -69,7 +69,7 @@ def main() -> None:
                         + trajectory.generator_speed_pu[i].tolist()
                         + trajectory.bus_voltage_pu[i].tolist()
                     )
-            except Exception as exc:  # experimental sweep: failures are outcomes
+            except RuntimeError as exc:  # simulator failures are recorded outcomes
                 case_rows.append(
                     {
                         **base,
