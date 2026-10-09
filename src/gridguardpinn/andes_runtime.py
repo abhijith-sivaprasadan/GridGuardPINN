@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import hashlib
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
 
@@ -55,7 +55,7 @@ def load_checkpoint(
         raise ValueError("Checkpoint SHA-256 mismatch; refusing to load.")
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
     if not isinstance(checkpoint, dict):
-        raise ValueError("Unsupported checkpoint structure.")
+        raise TypeError("Unsupported checkpoint structure.")
     summary = checkpoint["summary"]
     if summary["protocol"] != expected_protocol:
         raise ValueError("Checkpoint protocol does not match the pinned protocol.")
