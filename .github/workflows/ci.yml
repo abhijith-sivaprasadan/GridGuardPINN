@@ -3,8 +3,41 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 4 * * 0"
 
 jobs:
+  ssr:
+    name: SSR (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install core and development dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Verify SSR estimator and circuit
+        run: python -m pytest tests/test_ssr_estimator.py
+      - name: Reproduce source comparison and balanced-fault experiment
+        run: python scripts/run_ssr_benchmark.py
+      - name: Upload numerical evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ssr-${{ matrix.os }}
+          path: artifacts/ssr/
+          if-no-files-found: error
+
   core:
     runs-on: ubuntu-latest
     steps:
