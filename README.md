@@ -12,6 +12,41 @@ The project uses a classical single-machine infinite-bus (SMIB) swing-equation s
 
 The versioned [v1.0.0 GitHub Release](https://github.com/abhijith-sivaprasadan/GridGuardPINN/releases/tag/v1.0.0) contains the original frozen model archive, case-level validation and randomized timing ledgers, two vector figures, exact source commit, resolved dependency snapshot, and SHA-256 manifest. The released tag currently points to commit `839fd6e103c5b3ff249e3e550e08ffb5c690c54f`. **It is a research demonstrator, not operational grid software or a peer-reviewed publication.**
 
+## Subsynchronous oscillation estimator
+
+The [`ssr_estimator`](src/gridguardpinn/ssr_estimator) extension implements the
+IEEE 1977 First Benchmark Model's six-mass shaft and transient rotor/RLC
+circuits as a custom SciPy ODE, with an explicitly **approximate balanced
+fault**. ANDES 2.0.0 has a five-mass shaft and algebraic line model; this
+extension does not claim an ANDES-native six-mass SSR implementation.
+
+Matrix pencil and an independent Welch baseline analyse synthetic signals at
+240 reports/s. Four shaft frequencies agree with the published values within
+0.005 Hz; published no-load decrements are recovered in a separate configured
+shaft ringdown. Welch misses the weak second shaft mode and cannot independently
+identify damping in these records. The fifth frequency is computed but lacks
+a confirmed published reference. Coupled fault fits have additional misses
+and an ambiguous second mode; their damping is **not independently validated**.
+
+See the [source transcription](docs/ssr/SOURCES.md),
+[equations, reproduction and verification matrix](docs/ssr/MODEL.md), and
+[actual numerical results](docs/ssr/comparison.md), including errors, amplitudes
+and failures. This is benchmark-based synthetic research, **not field/PMU
+validation**, and does not reproduce phase-by-phase Case 1-T clearing.
+Implementation and checks are AI-assisted; independent numerical review by
+Abhijith is pending.
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest tests/test_ssr_estimator.py
+python scripts/run_ssr_benchmark.py
+```
+
+The dedicated SSR CI job runs tests and the complete bounded benchmark on
+Ubuntu, Windows and macOS, on push/PR/manual runs and weekly at **04:37 UTC
+Sunday** (`37 4 * * 0`). It uploads the numerical JSON and signal CSV for each
+OS. Existing core and ANDES integration jobs retain their original scope.
+
 ## Research working paper
 
 The [GridGuardPINN v1.0 technical working paper](docs/technical_working_paper_v1_0.md) brings together the SMIB development sequence, matched physics-loss ablations, pre-registered network-aware encoding experiment, conservative trust routing, independent-duration checks and randomized end-to-end timing. It includes research questions, mathematical definitions, figures, negative results, uncertainty analysis, limitations and source-linked reproducibility evidence. **Working paper, not peer reviewed or formally published.**

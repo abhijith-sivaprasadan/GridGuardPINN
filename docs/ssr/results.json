@@ -1,0 +1,845 @@
+{
+  "scope": "Published mechanical reference comparison plus custom FBM transient circuit with approximate balanced Thevenin fault. No field validation.",
+  "source_doi": "10.1109/T-PAS.1977.32485",
+  "environment": {
+    "python": "3.10.0",
+    "numpy": "2.2.6",
+    "scipy": "1.15.3",
+    "platform": "Windows-10-10.0.26300-SP0"
+  },
+  "shaft_computed_frequencies_hz": [
+    2.2541042965906728e-07,
+    15.712192126168551,
+    20.21132828935398,
+    25.547151970229525,
+    32.28463140085622,
+    47.45629855213177
+  ],
+  "fifth_mode_reference": "unverified: not tabulated in the primary source",
+  "published_amplitude_reference": "unavailable",
+  "protocol": {
+    "sample_rate_hz": 240,
+    "shaft_duration_s": 12,
+    "fault_duration_s": 0.075,
+    "fault_start_s": 0.5,
+    "match_tolerance_hz": 0.5,
+    "pencil_shaft_poles": 12,
+    "pencil_fault_poles": 20,
+    "welch_prominence_fraction": 0.01
+  },
+  "shaft_no_load": {
+    "matrix_pencil": {
+      "comparison": [
+        {
+          "mode": 1,
+          "published_frequency_hz": 15.71,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 15.71219011099003,
+            "decay_per_s": 0.04999999999971296,
+            "damping_ratio": 0.000506469567750226,
+            "amplitude": 0.00032161323566191283,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          "absolute_frequency_error_hz": 0.0021901109900284155,
+          "frequency_error_percent": 0.013940871992542427,
+          "published_decay_per_s": 0.05,
+          "absolute_decay_error_per_s": 2.870412241229303e-13,
+          "decay_error_percent": 5.740824482458606e-10
+        },
+        {
+          "mode": 2,
+          "published_frequency_hz": 20.21,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 20.21132070705576,
+            "decay_per_s": 0.11000000000012351,
+            "damping_ratio": 0.0008661995634077007,
+            "amplitude": 3.1254195242757416e-05,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          "absolute_frequency_error_hz": 0.0013207070557577083,
+          "frequency_error_percent": 0.006534918633140565,
+          "published_decay_per_s": 0.11,
+          "absolute_decay_error_per_s": 1.2351231148954867e-13,
+          "decay_error_percent": 1.1228391953595333e-10
+        },
+        {
+          "mode": 3,
+          "published_frequency_hz": 25.55,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 25.547151581556985,
+            "decay_per_s": 0.027999999999997267,
+            "damping_ratio": 0.00017443582015583086,
+            "amplitude": 0.00012553119490415262,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          "absolute_frequency_error_hz": 0.0028484184430155324,
+          "frequency_error_percent": 0.011148408778925763,
+          "published_decay_per_s": 0.028,
+          "absolute_decay_error_per_s": 2.733924198139448e-15,
+          "decay_error_percent": 9.76401499335517e-12
+        },
+        {
+          "mode": 4,
+          "published_frequency_hz": 32.28,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 32.28463109329577,
+            "decay_per_s": 0.028000000000197152,
+            "damping_ratio": 0.00013803281045006013,
+            "amplitude": 0.00022143111185921922,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          "absolute_frequency_error_hz": 0.004631093295770938,
+          "frequency_error_percent": 0.014346633506105756,
+          "published_decay_per_s": 0.028,
+          "absolute_decay_error_per_s": 1.9715132304476413e-13,
+          "decay_error_percent": 7.041118680170147e-10
+        }
+      ],
+      "unmatched_estimates": [
+        {
+          "frequency_hz": 47.45629855213007,
+          "decay_per_s": 3.965161532448813e-12,
+          "damping_ratio": 1.3298025284332623e-14,
+          "amplitude": 7.69391257481533e-08,
+          "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+          "damping_note": "exponential fit; positive decay is damping, negative is growth"
+        }
+      ]
+    },
+    "welch": {
+      "comparison": [
+        {
+          "mode": 1,
+          "published_frequency_hz": 15.71,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 15.714824540819894,
+            "decay_per_s": null,
+            "damping_ratio": null,
+            "amplitude": 0.000242241988313933,
+            "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+            "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+          },
+          "absolute_frequency_error_hz": 0.004824540819893031,
+          "frequency_error_percent": 0.03070999885355207,
+          "published_decay_per_s": 0.05,
+          "absolute_decay_error_per_s": null,
+          "decay_error_percent": null
+        },
+        {
+          "mode": 2,
+          "published_frequency_hz": 20.21,
+          "status": "missed",
+          "estimate": null
+        },
+        {
+          "mode": 3,
+          "published_frequency_hz": 25.55,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 25.549809816227683,
+            "decay_per_s": null,
+            "damping_ratio": null,
+            "amplitude": 0.00010666637649932957,
+            "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+            "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+          },
+          "absolute_frequency_error_hz": 0.0001901837723181643,
+          "frequency_error_percent": 0.0007443591871552418,
+          "published_decay_per_s": 0.028,
+          "absolute_decay_error_per_s": null,
+          "decay_error_percent": null
+        },
+        {
+          "mode": 4,
+          "published_frequency_hz": 32.28,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 32.28196899032024,
+            "decay_per_s": null,
+            "damping_ratio": null,
+            "amplitude": 0.00018815327593095374,
+            "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+            "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+          },
+          "absolute_frequency_error_hz": 0.0019689903202362302,
+          "frequency_error_percent": 0.0060997221816487925,
+          "published_decay_per_s": 0.028,
+          "absolute_decay_error_per_s": null,
+          "decay_error_percent": null
+        }
+      ],
+      "unmatched_estimates": []
+    },
+    "welch_diagnostics": {
+      "bin_width_hz": 0.16666666666666666,
+      "widths_hz": [
+        0.2731245210980428,
+        0.27673504673718696,
+        0.28018745760894603
+      ],
+      "prominence_fraction": 0.01
+    }
+  },
+  "shaft_transient_undamped": {
+    "matrix_pencil": {
+      "comparison": [
+        {
+          "mode": 1,
+          "published_frequency_hz": 15.71,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 15.71219212616854,
+            "decay_per_s": -4.52970994047063e-13,
+            "damping_ratio": -4.5883204711944635e-15,
+            "amplitude": 0.00032161319441274876,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          "absolute_frequency_error_hz": 0.0021921261685395876,
+          "frequency_error_percent": 0.013953699354166692,
+          "published_decay_per_s": 0.0,
+          "absolute_decay_error_per_s": 4.52970994047063e-13,
+          "decay_error_percent": null
+        },
+        {
+          "mode": 2,
+          "published_frequency_hz": 20.21,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 20.211328289353972,
+            "decay_per_s": 1.798561299892755e-13,
+            "damping_ratio": 1.4162845570248582e-15,
+            "amplitude": 3.125418351773805e-05,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          "absolute_frequency_error_hz": 0.0013282893539710017,
+          "frequency_error_percent": 0.0065724361898614626,
+          "published_decay_per_s": 0.0,
+          "absolute_decay_error_per_s": 1.798561299892755e-13,
+          "decay_error_percent": null
+        },
+        {
+          "mode": 3,
+          "published_frequency_hz": 25.55,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 25.547151970229514,
+            "decay_per_s": 1.4654943925052076e-13,
+            "damping_ratio": 9.12981129608721e-16,
+            "amplitude": 0.0001255311929944429,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          "absolute_frequency_error_hz": 0.002848029770486704,
+          "frequency_error_percent": 0.011146887555720955,
+          "published_decay_per_s": 0.0,
+          "absolute_decay_error_per_s": 1.4654943925052076e-13,
+          "decay_error_percent": null
+        },
+        {
+          "mode": 4,
+          "published_frequency_hz": 32.28,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 32.2846314008562,
+            "decay_per_s": 9.325873406851319e-14,
+            "damping_ratio": 4.597416129428936e-16,
+            "amplitude": 0.00022143110974964239,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          "absolute_frequency_error_hz": 0.004631400856197843,
+          "frequency_error_percent": 0.01434758629553235,
+          "published_decay_per_s": 0.0,
+          "absolute_decay_error_per_s": 9.325873406851319e-14,
+          "decay_error_percent": null
+        }
+      ],
+      "unmatched_estimates": [
+        {
+          "frequency_hz": 47.45629855213052,
+          "decay_per_s": 1.1515788322924989e-11,
+          "damping_ratio": 3.8620682419639684e-14,
+          "amplitude": 7.69391257515984e-08,
+          "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+          "damping_note": "exponential fit; positive decay is damping, negative is growth"
+        }
+      ]
+    },
+    "welch": {
+      "comparison": [
+        {
+          "mode": 1,
+          "published_frequency_hz": 15.71,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 15.714844436500677,
+            "decay_per_s": null,
+            "damping_ratio": null,
+            "amplitude": 0.00032158157790000843,
+            "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+            "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+          },
+          "absolute_frequency_error_hz": 0.004844436500675897,
+          "frequency_error_percent": 0.0308366422703749,
+          "published_decay_per_s": 0.0,
+          "absolute_decay_error_per_s": null,
+          "decay_error_percent": null
+        },
+        {
+          "mode": 2,
+          "published_frequency_hz": 20.21,
+          "status": "missed",
+          "estimate": null
+        },
+        {
+          "mode": 3,
+          "published_frequency_hz": 25.55,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 25.549815729871995,
+            "decay_per_s": null,
+            "damping_ratio": null,
+            "amplitude": 0.00012551802834904173,
+            "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+            "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+          },
+          "absolute_frequency_error_hz": 0.00018427012800614762,
+          "frequency_error_percent": 0.0007212138082432392,
+          "published_decay_per_s": 0.0,
+          "absolute_decay_error_per_s": null,
+          "decay_error_percent": null
+        },
+        {
+          "mode": 4,
+          "published_frequency_hz": 32.28,
+          "status": "resolved",
+          "estimate": {
+            "frequency_hz": 32.28196362235591,
+            "decay_per_s": null,
+            "damping_ratio": null,
+            "amplitude": 0.00022140649649091988,
+            "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+            "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+          },
+          "absolute_frequency_error_hz": 0.001963622355908967,
+          "frequency_error_percent": 0.006083092800213652,
+          "published_decay_per_s": 0.0,
+          "absolute_decay_error_per_s": null,
+          "decay_error_percent": null
+        }
+      ],
+      "unmatched_estimates": []
+    },
+    "welch_diagnostics": {
+      "bin_width_hz": 0.16666666666666666,
+      "widths_hz": [
+        0.2729847830536585,
+        0.2766916671415913,
+        0.28014506297491454
+      ],
+      "prominence_fraction": 0.01
+    }
+  },
+  "electrical_resonance": {
+    "published_approximate_hz": 40.0,
+    "intact_frozen_shaft_hz": 39.25302110163886,
+    "fault_thevenin_frozen_shaft_hz": 40.095507886738886,
+    "interpretation": "60 minus the low-frequency rotating-frame circuit pole; approximate source statement, not an exact target or coupled mode"
+  },
+  "fault": {
+    "equilibrium_residual": 1.5057380097191655e-13,
+    "window_s": [
+      1.0,
+      2.75
+    ],
+    "duration_s": 3.0,
+    "max_speed_deviation_pu": 0.4194643085103307,
+    "validity_note": "Ideal elastic shaft, zero mechanical damping, no protection or material limits. Large excursions are not plant predictions.",
+    "reference_warning": "Published bare-shaft frequencies are proximity references, not ground truth for coupled nonlinear fault modes. Published no-load decrement is NOT the coupled-system decay.",
+    "generator_speed": {
+      "matrix_pencil": {
+        "comparison": [
+          {
+            "mode": 1,
+            "published_frequency_hz": 15.71,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 15.914320839318501,
+              "decay_per_s": -0.0828077476630456,
+              "damping_ratio": -0.0008281382523760375,
+              "amplitude": 0.0037258879589386496,
+              "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+              "damping_note": "exponential fit; positive decay is damping, negative is growth"
+            },
+            "absolute_frequency_error_hz": 0.2043208393185001,
+            "frequency_error_percent": 1.3005782260884793
+          },
+          {
+            "mode": 2,
+            "published_frequency_hz": 20.21,
+            "status": "ambiguous",
+            "estimate": {
+              "frequency_hz": 20.26817648492759,
+              "decay_per_s": -0.4994383186597438,
+              "damping_ratio": -0.003921786745902092,
+              "amplitude": 0.006682671850394561,
+              "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+              "damping_note": "exponential fit; positive decay is damping, negative is growth"
+            },
+            "candidate_estimates": [
+              {
+                "frequency_hz": 20.26817648492759,
+                "decay_per_s": -0.4994383186597438,
+                "damping_ratio": -0.003921786745902092,
+                "amplitude": 0.006682671850394561,
+                "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+                "damping_note": "exponential fit; positive decay is damping, negative is growth"
+              },
+              {
+                "frequency_hz": 20.671712861035914,
+                "decay_per_s": 2.790646356710758,
+                "damping_ratio": 0.021480691247124567,
+                "amplitude": 0.001988010876664256,
+                "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+                "damping_note": "exponential fit; positive decay is damping, negative is growth"
+              }
+            ],
+            "absolute_frequency_error_hz": 0.0581764849275892,
+            "frequency_error_percent": 0.2878598957327521
+          },
+          {
+            "mode": 3,
+            "published_frequency_hz": 25.55,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 25.520033859509983,
+              "decay_per_s": -0.024181655251241146,
+              "damping_ratio": -0.00015080818241861504,
+              "amplitude": 0.0006048950734614461,
+              "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+              "damping_note": "exponential fit; positive decay is damping, negative is growth"
+            },
+            "absolute_frequency_error_hz": 0.02996614049001778,
+            "frequency_error_percent": 0.11728430720163514
+          },
+          {
+            "mode": 4,
+            "published_frequency_hz": 32.28,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 32.276658052583954,
+              "decay_per_s": -0.0020064500913409616,
+              "damping_ratio": -9.893727212037204e-06,
+              "amplitude": 0.0012237776876056774,
+              "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+              "damping_note": "exponential fit; positive decay is damping, negative is growth"
+            },
+            "absolute_frequency_error_hz": 0.0033419474160467644,
+            "frequency_error_percent": 0.010352996951817734
+          }
+        ],
+        "unmatched_estimates": [
+          {
+            "frequency_hz": 18.62725946908086,
+            "decay_per_s": 0.33136978488418994,
+            "damping_ratio": 0.00283127681561948,
+            "amplitude": 0.0001336056312837897,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          {
+            "frequency_hz": 20.671712861035914,
+            "decay_per_s": 2.790646356710758,
+            "damping_ratio": 0.021480691247124567,
+            "amplitude": 0.001988010876664256,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          {
+            "frequency_hz": 21.89271258961881,
+            "decay_per_s": 1.0829685878724788,
+            "damping_ratio": 0.007872686485245422,
+            "amplitude": 0.0001901893956458174,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          }
+        ]
+      },
+      "welch": {
+        "comparison": [
+          {
+            "mode": 1,
+            "published_frequency_hz": 15.71,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 15.915920781703605,
+              "decay_per_s": null,
+              "damping_ratio": null,
+              "amplitude": 0.00406641216955716,
+              "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+              "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+            },
+            "absolute_frequency_error_hz": 0.20592078170360395,
+            "frequency_error_percent": 1.3107624551470651
+          },
+          {
+            "mode": 2,
+            "published_frequency_hz": 20.21,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 20.26069993171962,
+              "decay_per_s": null,
+              "damping_ratio": null,
+              "amplitude": 0.010894817241619902,
+              "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+              "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+            },
+            "absolute_frequency_error_hz": 0.050699931719620395,
+            "frequency_error_percent": 0.25086557011192673
+          },
+          {
+            "mode": 3,
+            "published_frequency_hz": 25.55,
+            "status": "missed",
+            "estimate": null
+          },
+          {
+            "mode": 4,
+            "published_frequency_hz": 32.28,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 32.292754166750775,
+              "decay_per_s": null,
+              "damping_ratio": null,
+              "amplitude": 0.0012264164993046073,
+              "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+              "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+            },
+            "absolute_frequency_error_hz": 0.012754166750774232,
+            "frequency_error_percent": 0.03951104941379873
+          }
+        ],
+        "unmatched_estimates": []
+      },
+      "welch_diagnostics": {
+        "bin_width_hz": 1.1428571428571428,
+        "widths_hz": [
+          1.5063530141018575,
+          1.8292084883347204,
+          1.7846222260658229
+        ],
+        "prominence_fraction": 0.01
+      }
+    },
+    "electrical_torque": {
+      "matrix_pencil": {
+        "comparison": [
+          {
+            "mode": 1,
+            "published_frequency_hz": 15.71,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 15.914188211282998,
+              "decay_per_s": -0.08942203177080041,
+              "damping_ratio": -0.0008942933499097487,
+              "amplitude": 0.05021720530590074,
+              "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+              "damping_note": "exponential fit; positive decay is damping, negative is growth"
+            },
+            "absolute_frequency_error_hz": 0.2041882112829967,
+            "frequency_error_percent": 1.2997339992552304
+          },
+          {
+            "mode": 2,
+            "published_frequency_hz": 20.21,
+            "status": "ambiguous",
+            "estimate": {
+              "frequency_hz": 20.268388301243036,
+              "decay_per_s": -0.48512249920204553,
+              "damping_ratio": -0.0038093351285580354,
+              "amplitude": 0.40266231320563506,
+              "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+              "damping_note": "exponential fit; positive decay is damping, negative is growth"
+            },
+            "candidate_estimates": [
+              {
+                "frequency_hz": 20.268388301243036,
+                "decay_per_s": -0.48512249920204553,
+                "damping_ratio": -0.0038093351285580354,
+                "amplitude": 0.40266231320563506,
+                "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+                "damping_note": "exponential fit; positive decay is damping, negative is growth"
+              },
+              {
+                "frequency_hz": 20.69969653841756,
+                "decay_per_s": 3.0356568001563806,
+                "damping_ratio": 0.023334073363907755,
+                "amplitude": 0.4176722184054383,
+                "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+                "damping_note": "exponential fit; positive decay is damping, negative is growth"
+              }
+            ],
+            "absolute_frequency_error_hz": 0.058388301243034846,
+            "frequency_error_percent": 0.28890797250388345
+          },
+          {
+            "mode": 3,
+            "published_frequency_hz": 25.55,
+            "status": "missed",
+            "estimate": null
+          },
+          {
+            "mode": 4,
+            "published_frequency_hz": 32.28,
+            "status": "missed",
+            "estimate": null
+          }
+        ],
+        "unmatched_estimates": [
+          {
+            "frequency_hz": 18.62816649670827,
+            "decay_per_s": 0.29839748060156956,
+            "damping_ratio": 0.0025494339292098027,
+            "amplitude": 0.02798431305220048,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          {
+            "frequency_hz": 20.69969653841756,
+            "decay_per_s": 3.0356568001563806,
+            "damping_ratio": 0.023334073363907755,
+            "amplitude": 0.4176722184054383,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          {
+            "frequency_hz": 21.895139624210596,
+            "decay_per_s": 0.5269137860682291,
+            "damping_ratio": 0.0038300883196400078,
+            "amplitude": 0.04766459413819945,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          {
+            "frequency_hz": 36.16564156999478,
+            "decay_per_s": -0.3462791453313393,
+            "damping_ratio": -0.001523876565879187,
+            "amplitude": 0.0035965641450761542,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          {
+            "frequency_hz": 40.585271916222446,
+            "decay_per_s": -0.00758842131224725,
+            "damping_ratio": -2.9757956631813122e-05,
+            "amplitude": 0.005020336146678042,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          }
+        ]
+      },
+      "welch": {
+        "comparison": [
+          {
+            "mode": 1,
+            "published_frequency_hz": 15.71,
+            "status": "missed",
+            "estimate": null
+          },
+          {
+            "mode": 2,
+            "published_frequency_hz": 20.21,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 20.246521041955518,
+              "decay_per_s": null,
+              "damping_ratio": null,
+              "amplitude": 0.6624626958705342,
+              "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+              "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+            },
+            "absolute_frequency_error_hz": 0.036521041955516864,
+            "frequency_error_percent": 0.18070777810745603
+          },
+          {
+            "mode": 3,
+            "published_frequency_hz": 25.55,
+            "status": "missed",
+            "estimate": null
+          },
+          {
+            "mode": 4,
+            "published_frequency_hz": 32.28,
+            "status": "missed",
+            "estimate": null
+          }
+        ],
+        "unmatched_estimates": []
+      },
+      "welch_diagnostics": {
+        "bin_width_hz": 1.1428571428571428,
+        "widths_hz": [
+          1.8459046515010868
+        ],
+        "prominence_fraction": 0.01
+      }
+    },
+    "terminal_voltage": {
+      "matrix_pencil": {
+        "comparison": [
+          {
+            "mode": 1,
+            "published_frequency_hz": 15.71,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 15.913919996789733,
+              "decay_per_s": -0.09006511813606045,
+              "damping_ratio": -0.0009007399144557378,
+              "amplitude": 0.006207678072337338,
+              "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+              "damping_note": "exponential fit; positive decay is damping, negative is growth"
+            },
+            "absolute_frequency_error_hz": 0.2039199967897325,
+            "frequency_error_percent": 1.2980267141294237
+          },
+          {
+            "mode": 2,
+            "published_frequency_hz": 20.21,
+            "status": "ambiguous",
+            "estimate": {
+              "frequency_hz": 20.269150459658526,
+              "decay_per_s": -0.47535933683019654,
+              "damping_ratio": -0.0037325324186409424,
+              "amplitude": 0.040327726525589414,
+              "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+              "damping_note": "exponential fit; positive decay is damping, negative is growth"
+            },
+            "candidate_estimates": [
+              {
+                "frequency_hz": 20.269150459658526,
+                "decay_per_s": -0.47535933683019654,
+                "damping_ratio": -0.0037325324186409424,
+                "amplitude": 0.040327726525589414,
+                "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+                "damping_note": "exponential fit; positive decay is damping, negative is growth"
+              },
+              {
+                "frequency_hz": 20.663835096422304,
+                "decay_per_s": 3.180723084295481,
+                "damping_ratio": 0.02449090198104488,
+                "amplitude": 0.044958839072660794,
+                "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+                "damping_note": "exponential fit; positive decay is damping, negative is growth"
+              }
+            ],
+            "absolute_frequency_error_hz": 0.05915045965852528,
+            "frequency_error_percent": 0.2926791670387198
+          },
+          {
+            "mode": 3,
+            "published_frequency_hz": 25.55,
+            "status": "missed",
+            "estimate": null
+          },
+          {
+            "mode": 4,
+            "published_frequency_hz": 32.28,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 32.32367315129635,
+              "decay_per_s": 0.02506506978281129,
+              "damping_ratio": 0.00012341511145174942,
+              "amplitude": 0.0009301200873274298,
+              "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+              "damping_note": "exponential fit; positive decay is damping, negative is growth"
+            },
+            "absolute_frequency_error_hz": 0.04367315129634619,
+            "frequency_error_percent": 0.13529476857604147
+          }
+        ],
+        "unmatched_estimates": [
+          {
+            "frequency_hz": 18.624162221231483,
+            "decay_per_s": 0.39389345342843457,
+            "damping_ratio": 0.0033660432223414777,
+            "amplitude": 0.0027681319846901663,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          {
+            "frequency_hz": 20.663835096422304,
+            "decay_per_s": 3.180723084295481,
+            "damping_ratio": 0.02449090198104488,
+            "amplitude": 0.044958839072660794,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          },
+          {
+            "frequency_hz": 21.927962658188115,
+            "decay_per_s": 0.5651282065171713,
+            "damping_ratio": 0.004101712153778567,
+            "amplitude": 0.003959331851414213,
+            "amplitude_convention": "peak sinusoidal amplitude at analysis-window start",
+            "damping_note": "exponential fit; positive decay is damping, negative is growth"
+          }
+        ]
+      },
+      "welch": {
+        "comparison": [
+          {
+            "mode": 1,
+            "published_frequency_hz": 15.71,
+            "status": "missed",
+            "estimate": null
+          },
+          {
+            "mode": 2,
+            "published_frequency_hz": 20.21,
+            "status": "resolved",
+            "estimate": {
+              "frequency_hz": 20.250654647631713,
+              "decay_per_s": null,
+              "damping_ratio": null,
+              "amplitude": 0.0662270807501723,
+              "amplitude_convention": "sqrt(2) times local Welch band RMS over the analysis window",
+              "damping_note": "unresolved: finite Hann window and nonstationary ringdown; spectral width is not an independent decay measurement"
+            },
+            "absolute_frequency_error_hz": 0.04065464763171178,
+            "frequency_error_percent": 0.2011610471633438
+          },
+          {
+            "mode": 3,
+            "published_frequency_hz": 25.55,
+            "status": "missed",
+            "estimate": null
+          },
+          {
+            "mode": 4,
+            "published_frequency_hz": 32.28,
+            "status": "missed",
+            "estimate": null
+          }
+        ],
+        "unmatched_estimates": []
+      },
+      "welch_diagnostics": {
+        "bin_width_hz": 1.1428571428571428,
+        "widths_hz": [
+          1.8354495808057558
+        ],
+        "prominence_fraction": 0.01
+      }
+    }
+  }
+}
